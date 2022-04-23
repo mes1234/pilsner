@@ -7,10 +7,17 @@ import (
 )
 
 type Consumers struct {
-	Consumers map[uuid.UUID]*Consumer
+	Consumers map[uuid.UUID]*consumer
 }
 
-type Consumer struct {
+type consumer struct {
 	Stream  *Stream
 	Filters []*Filter
+}
+
+func NewConsumer(stream *Stream) *consumer {
+	return &consumer{
+		Stream:  stream,
+		Filters: make([]*Filter, 0),
+	}
 }
