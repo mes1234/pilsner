@@ -8,20 +8,15 @@ import (
 func TestBuildingNewStreamManager(t *testing.T) {
 	manager := stream.NewMemoryManager()
 
-	_ = manager.Create("dummy", stream.ProtoDefinition{})
+	_ = manager.Create("dummy")
 
-	err, strm := manager.Get("dummy")
+	err, streamIterator := manager.GetIterator("dummy")
 
 	if err != nil {
 		t.Errorf("There should be no errors")
 	}
-
-	if &strm.Proto == nil {
-		t.Errorf("There should be protobuf defined")
-	}
-
-	if &strm.Items == nil {
-		t.Errorf("There should be bootstraped items collection")
+	if streamIterator == nil {
+		t.Errorf("There should be open iterator")
 	}
 
 }

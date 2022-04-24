@@ -11,11 +11,11 @@ type Consumers struct {
 }
 
 type consumer struct {
-	Stream  *Stream
+	Stream  <-chan Item
 	Filters []*Filter
 }
 
-func NewConsumer(stream *Stream) *consumer {
+func NewConsumer(stream <-chan Item) *consumer {
 	return &consumer{
 		Stream:  stream,
 		Filters: make([]*Filter, 0),

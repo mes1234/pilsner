@@ -7,8 +7,10 @@ import (
 )
 
 func TestBuildingNewConsumer(t *testing.T) {
-	newStream := stream.Stream{}
-	con := consumer.NewConsumer(&newStream)
+
+	streamMock := make(<-chan stream.Item)
+
+	con := consumer.NewConsumer(streamMock)
 
 	if con.Filters == nil {
 		t.Errorf("consumer should have initialized Filters")

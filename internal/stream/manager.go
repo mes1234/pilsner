@@ -2,18 +2,22 @@ package stream
 
 import (
 	"fmt"
-	"github.com/google/uuid"
 )
 
-type Manager interface {
-	Create(name string, protobuf ProtoDefinition) (err error, id uuid.UUID)
-	Delete(name string) (err error)
-	Get(name string) (err error, stream *Stream)
+// Streams contain all streams in pilsner
+type Streams struct {
+	Streams map[string]Streamer //Streams in given instance
 }
 
-func (m *memoryManager) Create(name string, protobuf ProtoDefinition) (err error) {
+type Manager interface {
+	Create(streamName string) (err error)
+	Delete(streamName string) (err error)
+	GetIterator(streamName string) (err error, streamIterator <-chan Item)
+}
+
+func (m *memoryManager) Create(name string) (err error) {
 	if _, ok := m.streams.Streams[name]; !ok {
-		m.streams.Streams[name] = *NewStream(protobuf)
+		m.streams.Streams[name] = newStreamer(context{})
 		err = nil
 		return
 	} else {
@@ -27,16 +31,23 @@ func (m *memoryManager) Delete(name string) (err error) {
 	return fmt.Errorf("stream %s cannot be deleted", name)
 }
 
-func (m *memoryManager) Get(name string) (err error, stream *Stream) {
-	if val, ok := m.streams.Streams[name]; ok {
-		stream = &val
-		err = nil
+func (m *memoryManager) GetIterator(name string) (err error, streamIterator <-chan Item) {
+	if streamer, ok := m.streams.Streams[name]; ok {
+
+		// Create channel between source and sink
+		channel := make(chan Item, 0)
+
+		// Start writing to channel
+		go streamer.Start(channel)
+
+		// return other part of channel to consumer
+		streamIterator = channel
+
 		return
 	} else {
 		err = fmt.Errorf("stream %s doesn't exist", name)
+		return
 	}
-	err = nil
-	return
 }
 
 type memoryManager struct {
@@ -45,7 +56,7 @@ type memoryManager struct {
 
 func NewMemoryManager() *memoryManager {
 	streams := Streams{
-		Streams: make(map[string]Stream),
+		Streams: make(map[string]Streamer),
 	}
 	return &memoryManager{streams: streams}
 }
