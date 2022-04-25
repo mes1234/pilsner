@@ -15,24 +15,24 @@ type Manager interface {
 	GetIterator(streamName string) (err error, streamIterator <-chan Item)
 }
 
-func (m *memoryManager) Create(name string) (err error) {
-	if _, ok := m.streams.Streams[name]; !ok {
-		m.streams.Streams[name] = newStreamer(context{})
+func (m *memoryManager) Create(streamName string) (err error) {
+	if _, ok := m.streams.Streams[streamName]; !ok {
+		m.streams.Streams[streamName] = newStreamer(context{})
 		err = nil
 		return
 	} else {
-		err = fmt.Errorf("stream %s already exists", name)
+		err = fmt.Errorf("stream %s already exists", streamName)
 	}
 	err = nil
 	return
 }
 
-func (m *memoryManager) Delete(name string) (err error) {
-	return fmt.Errorf("stream %s cannot be deleted", name)
+func (m *memoryManager) Delete(streamName string) (err error) {
+	return fmt.Errorf("stream %s cannot be deleted", streamName)
 }
 
-func (m *memoryManager) GetIterator(name string) (err error, streamIterator <-chan Item) {
-	if streamer, ok := m.streams.Streams[name]; ok {
+func (m *memoryManager) GetIterator(streamName string) (err error, streamIterator <-chan Item) {
+	if streamer, ok := m.streams.Streams[streamName]; ok {
 
 		// Create channel between source and sink
 		channel := make(chan Item, 0)
@@ -45,7 +45,7 @@ func (m *memoryManager) GetIterator(name string) (err error, streamIterator <-ch
 
 		return
 	} else {
-		err = fmt.Errorf("stream %s doesn't exist", name)
+		err = fmt.Errorf("stream %s doesn't exist", streamName)
 		return
 	}
 }

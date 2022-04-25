@@ -6,17 +6,29 @@ import (
 	"testing"
 )
 
+type streamManagerMock struct {
+}
+
+func (s streamManagerMock) Create(streamName string) (err error) {
+	return nil
+}
+
+func (s streamManagerMock) Delete(streamName string) (err error) {
+	return nil
+}
+
+func (s streamManagerMock) GetIterator(streamName string) (err error, streamIterator <-chan stream.Item) {
+	return nil, make(chan stream.Item)
+}
+
 func TestBuildingNewConsumer(t *testing.T) {
 
-	streamMock := make(<-chan stream.Item)
+	manager := consumer.NewMemoryManager(streamManagerMock{})
 
-	con := consumer.NewConsumer(streamMock)
+	err, _ := manager.Create("dummy")
 
-	if con.Filters == nil {
-		t.Errorf("consumer should have initialized Filters")
+	if err != nil {
+		t.Errorf("consumer should be created sucesfully")
 	}
 
-	if con.Stream == nil {
-		t.Errorf("consumer shall always be attached to stream")
-	}
 }

@@ -1,23 +1,15 @@
 package consumer
 
 import (
-	"github.com/google/uuid"
-	. "pilsner/internal/filter"
-	. "pilsner/internal/stream"
+	"pilsner/internal/stream"
 )
 
-type Consumers struct {
-	Consumers map[uuid.UUID]*consumer
-}
-
 type consumer struct {
-	Stream  <-chan Item
-	Filters []*Filter
+	streamIterator <-chan stream.Item
 }
 
-func NewConsumer(stream <-chan Item) *consumer {
+func newConsumer(stream <-chan stream.Item) *consumer {
 	return &consumer{
-		Stream:  stream,
-		Filters: make([]*Filter, 0),
+		streamIterator: stream,
 	}
 }
