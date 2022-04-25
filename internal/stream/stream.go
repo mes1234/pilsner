@@ -6,6 +6,7 @@ type Streamer interface {
 
 type stream struct {
 	items   []*Item
+	hash    hash
 	context context
 }
 
