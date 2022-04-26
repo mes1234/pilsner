@@ -13,10 +13,10 @@ type Manager interface {
 
 func (m *memoryManager) Create(streamName string) (err error, id uuid.UUID) {
 
-	if er, streamIterator := m.streamManager.GetIterator(streamName); er == nil {
+	if er, dataSource := m.streamManager.GetConsumerDataSource(streamName); er == nil {
 		id, _ = uuid.NewUUID()
 
-		m.consumers[id] = newConsumer(streamIterator)
+		m.consumers[id] = NewConsumer(dataSource)
 
 		return
 	} else {

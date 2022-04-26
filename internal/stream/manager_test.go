@@ -10,7 +10,7 @@ func TestBuildingNewStreamManager(t *testing.T) {
 
 	_ = manager.Create("dummy")
 
-	err, streamIterator := manager.GetIterator("dummy")
+	err, streamIterator := manager.GetConsumerDataSource("dummy")
 
 	if err != nil {
 		t.Errorf("There should be no errors")

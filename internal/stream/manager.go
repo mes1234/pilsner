@@ -12,12 +12,12 @@ type Streams struct {
 type Manager interface {
 	Create(streamName string) (err error)
 	Delete(streamName string) (err error)
-	GetIterator(streamName string) (err error, streamIterator <-chan Item)
+	GetConsumerDataSource(streamName string) (err error, streamIterator <-chan Item)
 }
 
 func (m *memoryManager) Create(streamName string) (err error) {
 	if _, ok := m.streams.Streams[streamName]; !ok {
-		m.streams.Streams[streamName] = newStreamer(context{})
+		m.streams.Streams[streamName] = NewStream(Context{})
 		err = nil
 		return
 	} else {
@@ -31,14 +31,14 @@ func (m *memoryManager) Delete(streamName string) (err error) {
 	return fmt.Errorf("stream %s cannot be deleted", streamName)
 }
 
-func (m *memoryManager) GetIterator(streamName string) (err error, streamIterator <-chan Item) {
+func (m *memoryManager) GetConsumerDataSource(streamName string) (err error, streamIterator <-chan Item) {
 	if streamer, ok := m.streams.Streams[streamName]; ok {
 
 		// Create channel between source and sink
 		channel := make(chan Item, 0)
 
-		// Start writing to channel
-		go streamer.Start(channel)
+		// StartStreaming writing to channel
+		streamer.RegisterConsumer(channel)
 
 		// return other part of channel to consumer
 		streamIterator = channel
