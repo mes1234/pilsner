@@ -23,7 +23,6 @@ func (m *memoryManager) Create(streamName string) (err error, id uuid.UUID) {
 		err = fmt.Errorf("error during creating new consumer for %s", streamName)
 		return
 	}
-
 }
 
 func (m *memoryManager) Delete(streamName string) (err error) {
@@ -32,12 +31,12 @@ func (m *memoryManager) Delete(streamName string) (err error) {
 }
 
 type memoryManager struct {
-	consumers     map[uuid.UUID]*consumer
+	consumers     map[uuid.UUID]Consumer
 	streamManager stream.Manager
 }
 
 func NewMemoryManager(streamManager stream.Manager) *memoryManager {
-	consumers := make(map[uuid.UUID]*consumer)
+	consumers := make(map[uuid.UUID]Consumer)
 	return &memoryManager{
 		consumers:     consumers,
 		streamManager: streamManager,

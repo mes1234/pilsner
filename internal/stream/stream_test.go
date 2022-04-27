@@ -10,17 +10,23 @@ func TestStreamPublishing(t *testing.T) {
 	strm := stream.NewStream(stream.Context{})
 
 	pub := make(chan stream.Item)
-	sub := make(chan stream.Item, 1)
+	con1 := make(chan stream.Item, 1)
+	con2 := make(chan stream.Item, 1)
 
-	go strm.RegisterPublisher(pub)
+	strm.RegisterPublisher(pub)
 
-	strm.RegisterConsumer(sub)
+	strm.RegisterConsumer(con1)
+	strm.RegisterConsumer(con2)
 
 	pub <- stream.Item{}
 
 	time.Sleep(1 * time.Second)
 
-	if len(sub) != cap(sub) {
+	if len(con1) != cap(con1) {
+		t.Errorf("there is no pending data in consumer ")
+	}
+
+	if len(con2) != cap(con2) {
 		t.Errorf("there is no pending data in consumer ")
 	}
 

@@ -1,6 +1,7 @@
 package consumer_test
 
 import (
+	"fmt"
 	consumer "pilsner/internal/consumer"
 	"pilsner/internal/stream"
 	"testing"
@@ -52,4 +53,54 @@ func TestConsumerReportsConsumedItems(t *testing.T) {
 		t.Errorf("Consummer should consume one item")
 	}
 
+}
+
+func TestConsumerCallback(t *testing.T) {
+	channel := make(chan stream.Item)
+
+	cons := consumer.NewConsumer(channel)
+
+	count := 4
+
+	hit := 0
+
+	cons.RegisterCallback(func(item stream.Item) error {
+		hit++
+		return nil
+	})
+
+	for i := 1; i <= count; i++ {
+		channel <- stream.Item{}
+	}
+
+	time.Sleep(1 * time.Second)
+
+	if hit != count {
+		t.Errorf("Consummer should consume items item")
+	}
+}
+
+func TestConsumerCallbackRetry(t *testing.T) {
+	channel := make(chan stream.Item)
+
+	cons := consumer.NewConsumer(channel)
+
+	count := 4
+
+	hit := 0
+
+	cons.RegisterCallback(func(item stream.Item) error {
+		hit++
+		return fmt.Errorf("random callback error")
+	})
+
+	for i := 1; i <= count; i++ {
+		channel <- stream.Item{}
+	}
+
+	time.Sleep(1 * time.Second)
+
+	if hit != count*consumer.DefaultRetryAttempts {
+		t.Errorf("Consummer should consume items item")
+	}
 }

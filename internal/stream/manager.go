@@ -21,14 +21,14 @@ func (m *memoryManager) Create(streamName string) (err error) {
 		err = nil
 		return
 	} else {
-		err = fmt.Errorf("stream %s already exists", streamName)
+		err = fmt.Errorf("memoryStream %s already exists", streamName)
 	}
 	err = nil
 	return
 }
 
 func (m *memoryManager) Delete(streamName string) (err error) {
-	return fmt.Errorf("stream %s cannot be deleted", streamName)
+	return fmt.Errorf("memoryStream %s cannot be deleted", streamName)
 }
 
 func (m *memoryManager) GetConsumerDataSource(streamName string) (err error, streamIterator <-chan Item) {
@@ -45,7 +45,7 @@ func (m *memoryManager) GetConsumerDataSource(streamName string) (err error, str
 
 		return
 	} else {
-		err = fmt.Errorf("stream %s doesn't exist", streamName)
+		err = fmt.Errorf("memoryStream %s doesn't exist", streamName)
 		return
 	}
 }
