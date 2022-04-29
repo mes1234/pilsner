@@ -2,6 +2,7 @@ package consumer_test
 
 import (
 	"fmt"
+	"github.com/google/uuid"
 	consumer "pilsner/internal/consumer"
 	"pilsner/internal/stream"
 	"testing"
@@ -19,7 +20,7 @@ func (s streamManagerMock) Delete(streamName string) (err error) {
 	return nil
 }
 
-func (s streamManagerMock) GetConsumerDataSource(streamName string) (err error, streamIterator <-chan stream.Item) {
+func (s streamManagerMock) CreateConsumerDataSource(streamName string, consumerId uuid.UUID) (err error, streamIterator <-chan stream.Item) {
 	return nil, make(chan stream.Item)
 }
 

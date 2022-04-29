@@ -2,22 +2,23 @@ package stream
 
 import (
 	"fmt"
+	"github.com/google/uuid"
 )
 
 // Streams contain all streams in pilsner
 type Streams struct {
-	Streams map[string]Streamer //Streams in given instance
+	streams map[string]Streamer
 }
 
 type Manager interface {
 	Create(streamName string) (err error)
 	Delete(streamName string) (err error)
-	GetConsumerDataSource(streamName string) (err error, streamIterator <-chan Item)
+	CreateConsumerDataSource(streamName string, consumerId uuid.UUID) (err error, streamIterator <-chan Item)
 }
 
 func (m *memoryManager) Create(streamName string) (err error) {
-	if _, ok := m.streams.Streams[streamName]; !ok {
-		m.streams.Streams[streamName] = NewStream(Context{})
+	if _, ok := m.streams.streams[streamName]; !ok {
+		m.streams.streams[streamName] = NewStream(Context{})
 		err = nil
 		return
 	} else {
@@ -31,11 +32,14 @@ func (m *memoryManager) Delete(streamName string) (err error) {
 	return fmt.Errorf("memoryStream %s cannot be deleted", streamName)
 }
 
-func (m *memoryManager) GetConsumerDataSource(streamName string) (err error, streamIterator <-chan Item) {
-	if streamer, ok := m.streams.Streams[streamName]; ok {
+func (m *memoryManager) CreateConsumerDataSource(streamName string, consumerId uuid.UUID) (err error, streamIterator <-chan Item) {
+	if streamer, ok := m.streams.streams[streamName]; ok {
 
 		// Create channel between source and sink
 		channel := make(chan Item, 0)
+
+		// Register channel for consumer
+		m.consumerChannels[consumerId] = channel
 
 		// StartStreaming writing to channel
 		streamer.RegisterConsumer(channel)
@@ -51,12 +55,16 @@ func (m *memoryManager) GetConsumerDataSource(streamName string) (err error, str
 }
 
 type memoryManager struct {
-	streams Streams
+	streams          Streams
+	consumerChannels map[uuid.UUID]chan Item
 }
 
 func NewMemoryManager() *memoryManager {
 	streams := Streams{
-		Streams: make(map[string]Streamer),
+		streams: make(map[string]Streamer),
 	}
-	return &memoryManager{streams: streams}
+	return &memoryManager{
+		streams:          streams,
+		consumerChannels: make(map[uuid.UUID]chan Item),
+	}
 }
