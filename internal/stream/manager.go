@@ -7,12 +7,18 @@ import (
 
 // Streams contain all streams in pilsner
 type Streams struct {
-	streams map[string]Streamer
+	streams map[string]ConsumerRegistrar
 }
 
-type Manager interface {
+type Creator interface {
 	Create(streamName string) (err error)
+}
+
+type Deleter interface {
 	Delete(streamName string) (err error)
+}
+
+type DataSourceProvider interface {
 	CreateConsumerDataSource(streamName string, consumerId uuid.UUID) (err error, streamIterator <-chan Item)
 }
 
@@ -61,7 +67,7 @@ type memoryManager struct {
 
 func NewMemoryManager() *memoryManager {
 	streams := Streams{
-		streams: make(map[string]Streamer),
+		streams: make(map[string]ConsumerRegistrar),
 	}
 	return &memoryManager{
 		streams:          streams,

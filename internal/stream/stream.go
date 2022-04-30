@@ -4,9 +4,12 @@ import "sync"
 
 const BufferSize int = 100
 
-type Streamer interface {
-	RegisterConsumer(channel chan<- Item)
+type PublisherRegistrar interface {
 	RegisterPublisher(channel <-chan Item)
+}
+
+type ConsumerRegistrar interface {
+	RegisterConsumer(channel chan<- Item)
 }
 
 type memoryStream struct {

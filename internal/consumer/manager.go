@@ -6,8 +6,11 @@ import (
 	"pilsner/internal/stream"
 )
 
-type Manager interface {
+type Creator interface {
 	Create(streamName string) (err error)
+}
+
+type Deleter interface {
 	Delete(streamName string) (err error)
 }
 
@@ -33,10 +36,10 @@ func (m *memoryManager) Delete(streamName string) (err error) {
 
 type memoryManager struct {
 	consumers     map[uuid.UUID]Consumer
-	streamManager stream.Manager
+	streamManager stream.DataSourceProvider
 }
 
-func NewMemoryManager(streamManager stream.Manager) *memoryManager {
+func NewMemoryManager(streamManager stream.DataSourceProvider) *memoryManager {
 	consumers := make(map[uuid.UUID]Consumer)
 	return &memoryManager{
 		consumers:     consumers,
