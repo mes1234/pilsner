@@ -1,6 +1,7 @@
 package stream_test
 
 import (
+	"github.com/google/uuid"
 	"pilsner/internal/stream"
 	"testing"
 	"time"
@@ -10,13 +11,14 @@ func TestStreamPublishing(t *testing.T) {
 	strm := stream.NewStream(stream.Context{})
 
 	pub := make(chan stream.Item)
-	con1 := make(chan stream.Item, 1)
-	con2 := make(chan stream.Item, 1)
 
 	strm.RegisterPublisher(pub)
 
-	strm.RegisterConsumer(con1)
-	strm.RegisterConsumer(con2)
+	id1, _ := uuid.NewUUID()
+	id2, _ := uuid.NewUUID()
+
+	_, con1 := strm.CreateConsumerDataSource(id1)
+	_, con2 := strm.CreateConsumerDataSource(id2)
 
 	pub <- stream.Item{}
 

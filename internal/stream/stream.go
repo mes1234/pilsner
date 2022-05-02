@@ -1,6 +1,9 @@
 package stream
 
-import "sync"
+import (
+	"github.com/google/uuid"
+	"sync"
+)
 
 const BufferSize int = 100
 
@@ -8,60 +11,71 @@ type PublisherRegistrar interface {
 	RegisterPublisher(channel <-chan Item)
 }
 
-type ConsumerRegistrar interface {
-	RegisterConsumer(channel chan<- Item)
+type DataSourceProvider interface {
+	CreateConsumerDataSource(consumerId uuid.UUID) (err error, streamIterator <-chan Item)
 }
 
 type memoryStream struct {
-	items         []Item
-	context       Context
-	buffer        chan Item
-	lock          sync.Mutex
-	notifications []chan<- Item
+	items            []Item
+	context          Context
+	buffer           chan Item
+	lock             sync.Mutex
+	consumerChannels map[uuid.UUID]chan<- Item
 }
 
-func (s *memoryStream) RegisterConsumer(channel chan<- Item) {
-	s.notifications = append(s.notifications, channel)
+func (ms *memoryStream) CreateConsumerDataSource(consumerId uuid.UUID) (err error, streamIterator <-chan Item) {
+
+	// Create channel between source and sink
+	channel := make(chan Item, 0)
+
+	// Register channel for consumer
+	ms.consumerChannels[consumerId] = channel
+
+	// return other part of channel to consumer
+	streamIterator = channel
+
+	return
 }
 
-func (s *memoryStream) RegisterPublisher(channel <-chan Item) {
-	go s.startPublisher(channel)
+func (ms *memoryStream) RegisterPublisher(channel <-chan Item) {
+	go ms.startPublisher(channel)
 }
 
-func (s *memoryStream) startPublisher(channel <-chan Item) {
+func (ms *memoryStream) startPublisher(channel <-chan Item) {
 	for item := range channel {
-		s.buffer <- item
+		ms.buffer <- item
 	}
 }
 
-func (s *memoryStream) startCollecting() {
-	for item := range s.buffer {
-		s.add(item)
-		go s.broadcast(item)
+func (ms *memoryStream) startCollecting() {
+	for item := range ms.buffer {
+		ms.add(item)
+		go ms.broadcast(item)
 	}
 }
 
-func (s *memoryStream) broadcast(item Item) {
-	for _, channel := range s.notifications {
+func (ms *memoryStream) broadcast(item Item) {
+	for _, channel := range ms.consumerChannels {
 		channel <- item
 	}
 }
 
-func (s *memoryStream) add(item Item) {
+func (ms *memoryStream) add(item Item) {
 
-	s.lock.Lock()
-	defer s.lock.Unlock()
+	ms.lock.Lock()
+	defer ms.lock.Unlock()
 
-	s.items = append(s.items, item)
+	ms.items = append(ms.items, item)
 }
 
 func NewStream(context Context) *memoryStream {
 	items := make([]Item, 0)
 
 	newStream := memoryStream{
-		items:   items,
-		context: context,
-		buffer:  make(chan Item, BufferSize),
+		items:            items,
+		context:          context,
+		buffer:           make(chan Item, BufferSize),
+		consumerChannels: make(map[uuid.UUID]chan<- Item, BufferSize),
 	}
 
 	go newStream.startCollecting()

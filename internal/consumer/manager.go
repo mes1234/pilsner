@@ -18,7 +18,7 @@ func (m *memoryManager) Create(streamName string) (err error, id uuid.UUID) {
 
 	id, _ = uuid.NewUUID()
 
-	if er, dataSource := m.streamManager.CreateConsumerDataSource(streamName, id); er == nil {
+	if er, dataSource := m.streamManager.CreateConsumerDataSource(id); er == nil {
 
 		m.consumers[id] = NewConsumer(dataSource)
 

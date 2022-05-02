@@ -1,7 +1,6 @@
 package stream_test
 
 import (
-	"github.com/google/uuid"
 	"pilsner/internal/stream"
 	"testing"
 )
@@ -11,13 +10,13 @@ func TestBuildingNewStreamManager(t *testing.T) {
 
 	_ = manager.Create("dummy")
 
-	err, streamIterator := manager.CreateConsumerDataSource("dummy", uuid.UUID{})
+	err, streamIterator := manager.Get("dummy")
 
 	if err != nil {
 		t.Errorf("There should be no errors")
 	}
 	if streamIterator == nil {
-		t.Errorf("There should be open iterator")
+		t.Errorf("There should be stream")
 	}
 
 }

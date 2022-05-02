@@ -12,15 +12,7 @@ import (
 type streamManagerMock struct {
 }
 
-func (s streamManagerMock) Create(streamName string) (err error) {
-	return nil
-}
-
-func (s streamManagerMock) Delete(streamName string) (err error) {
-	return nil
-}
-
-func (s streamManagerMock) CreateConsumerDataSource(streamName string, consumerId uuid.UUID) (err error, streamIterator <-chan stream.Item) {
+func (s streamManagerMock) CreateConsumerDataSource(consumerId uuid.UUID) (err error, streamIterator <-chan stream.Item) {
 	return nil, make(chan stream.Item)
 }
 
