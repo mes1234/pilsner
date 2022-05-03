@@ -20,7 +20,7 @@ func TestBuildingNewConsumer(t *testing.T) {
 
 	manager := consumer.NewMemoryManager(streamManagerMock{})
 
-	err, _ := manager.Create("dummy")
+	err, _ := manager.Create()
 
 	if err != nil {
 		t.Errorf("consumer should be created sucesfully")
