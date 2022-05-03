@@ -12,6 +12,10 @@ import (
 type streamManagerMock struct {
 }
 
+func NopCallback(item stream.Item) error {
+	return nil
+}
+
 func (s streamManagerMock) CreateConsumerDataSource(consumerId uuid.UUID) (err error, streamIterator <-chan stream.Item) {
 	return nil, make(chan stream.Item)
 }
@@ -20,7 +24,7 @@ func TestBuildingNewConsumer(t *testing.T) {
 
 	manager := consumer.NewMemoryManager(streamManagerMock{})
 
-	err, _ := manager.Create()
+	err, _ := manager.Create(NopCallback)
 
 	if err != nil {
 		t.Errorf("consumer should be created sucesfully")
@@ -32,7 +36,7 @@ func TestConsumerReportsConsumedItems(t *testing.T) {
 
 	channel := make(chan stream.Item)
 
-	cons := consumer.NewConsumer(channel)
+	cons := consumer.NewConsumer(channel, NopCallback)
 
 	count := 4
 
@@ -51,16 +55,16 @@ func TestConsumerReportsConsumedItems(t *testing.T) {
 func TestConsumerCallback(t *testing.T) {
 	channel := make(chan stream.Item)
 
-	cons := consumer.NewConsumer(channel)
-
 	count := 4
 
 	hit := 0
 
-	cons.RegisterCallback(func(item stream.Item) error {
+	dummyCallback := func(item stream.Item) error {
 		hit++
 		return nil
-	})
+	}
+
+	_ = consumer.NewConsumer(channel, dummyCallback)
 
 	for i := 1; i <= count; i++ {
 		channel <- stream.Item{}
@@ -76,16 +80,16 @@ func TestConsumerCallback(t *testing.T) {
 func TestConsumerCallbackRetry(t *testing.T) {
 	channel := make(chan stream.Item)
 
-	cons := consumer.NewConsumer(channel)
-
 	count := 4
 
 	hit := 0
 
-	cons.RegisterCallback(func(item stream.Item) error {
+	dummyCallback := func(item stream.Item) error {
 		hit++
 		return fmt.Errorf("random callback error")
-	})
+	}
+
+	_ = consumer.NewConsumer(channel, dummyCallback)
 
 	for i := 1; i <= count; i++ {
 		channel <- stream.Item{}

@@ -6,20 +6,12 @@ import (
 
 const DefaultRetryAttempts int = 3
 
-type Consumer interface {
-	RegisterCallback(callback Callback)
-}
-
 type memoryConsumer struct {
 	stream        <-chan stream.Item
 	ConsumedItems int
 	FailedItems   int
 	callback      Callback
 	retryPolicy   RetryPolicy
-}
-
-func (c *memoryConsumer) RegisterCallback(callback Callback) {
-	c.callback = callback
 }
 
 func (c *memoryConsumer) startProcessing() {
@@ -43,15 +35,11 @@ func simpleNRetryPolicy(n int) RetryPolicy {
 	}
 }
 
-func breakerCallback(item stream.Item) error {
-	return nil
-}
-
-func NewConsumer(stream <-chan stream.Item) *memoryConsumer {
+func NewConsumer(stream <-chan stream.Item, callback Callback) *memoryConsumer {
 	consumer := memoryConsumer{
 		stream:      stream,
 		retryPolicy: simpleNRetryPolicy(DefaultRetryAttempts),
-		callback:    breakerCallback,
+		callback:    callback,
 	}
 
 	go consumer.startProcessing()

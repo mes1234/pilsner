@@ -10,13 +10,13 @@ type Creator interface {
 	Create() (err error, consumerId uuid.UUID)
 }
 
-func (m *memoryManager) Create() (err error, consumerId uuid.UUID) {
+func (m *memoryManager) Create(callback Callback) (err error, consumerId uuid.UUID) {
 
 	consumerId, _ = uuid.NewUUID()
 
 	if er, dataSource := m.dataSourceProvider.CreateConsumerDataSource(consumerId); er == nil {
 
-		m.consumers[consumerId] = NewConsumer(dataSource)
+		m.consumers[consumerId] = NewConsumer(dataSource, callback)
 
 		return
 	} else {
@@ -26,12 +26,12 @@ func (m *memoryManager) Create() (err error, consumerId uuid.UUID) {
 }
 
 type memoryManager struct {
-	consumers          map[uuid.UUID]Consumer
+	consumers          map[uuid.UUID]interface{}
 	dataSourceProvider stream.DataSourceProvider
 }
 
 func NewMemoryManager(streamManager stream.DataSourceProvider) *memoryManager {
-	consumers := make(map[uuid.UUID]Consumer)
+	consumers := make(map[uuid.UUID]interface{})
 	return &memoryManager{
 		consumers:          consumers,
 		dataSourceProvider: streamManager,
