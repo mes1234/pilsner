@@ -7,7 +7,7 @@ import (
 )
 
 type Creator interface {
-	Create() (err error, consumerId uuid.UUID)
+	Create(callback Callback) (err error, consumerId uuid.UUID)
 }
 
 func (m *memoryManager) Create(callback Callback) (err error, consumerId uuid.UUID) {
@@ -30,7 +30,7 @@ type memoryManager struct {
 	dataSourceProvider stream.DataSourceProvider
 }
 
-func NewMemoryManager(streamManager stream.DataSourceProvider) *memoryManager {
+func NewManager(streamManager stream.DataSourceProvider) *memoryManager {
 	consumers := make(map[uuid.UUID]interface{})
 	return &memoryManager{
 		consumers:          consumers,

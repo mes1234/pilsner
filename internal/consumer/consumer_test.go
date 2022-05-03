@@ -3,7 +3,7 @@ package consumer_test
 import (
 	"fmt"
 	"github.com/google/uuid"
-	consumer "pilsner/internal/consumer"
+	"pilsner/internal/consumer"
 	"pilsner/internal/stream"
 	"testing"
 	"time"
@@ -22,7 +22,7 @@ func (s streamManagerMock) CreateConsumerDataSource(consumerId uuid.UUID) (err e
 
 func TestBuildingNewConsumer(t *testing.T) {
 
-	manager := consumer.NewMemoryManager(streamManagerMock{})
+	manager := consumer.NewManager(streamManagerMock{})
 
 	err, _ := manager.Create(NopCallback)
 

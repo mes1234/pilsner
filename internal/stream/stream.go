@@ -47,7 +47,7 @@ func (ms *memoryStream) startPublisher(channel <-chan Item) {
 	}
 }
 
-func (ms *memoryStream) startCollecting() {
+func (ms *memoryStream) startPublishing() {
 	for item := range ms.buffer {
 		ms.add(item)
 		go ms.broadcast(item)
@@ -78,7 +78,7 @@ func NewStream(context Context) *memoryStream {
 		consumerChannels: make(map[uuid.UUID]chan<- Item, BufferSize),
 	}
 
-	go newStream.startCollecting()
+	go newStream.startPublishing()
 
 	return &newStream
 }

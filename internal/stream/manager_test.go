@@ -6,7 +6,7 @@ import (
 )
 
 func TestBuildingNewStreamManager(t *testing.T) {
-	manager := stream.NewMemoryManager()
+	manager := stream.NewManager()
 
 	_ = manager.Create("dummy")
 
