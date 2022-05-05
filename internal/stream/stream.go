@@ -1,84 +1,73 @@
 package stream
 
 import (
-	"github.com/google/uuid"
 	"sync"
 )
 
+/////////////
+// PUBLIC  //
+/////////////
+
 const BufferSize int = 100
 
-type PublisherRegistrar interface {
-	RegisterPublisher(channel <-chan Item)
+type Item struct {
+	content []byte
 }
 
-type DataSourceProvider interface {
-	CreateConsumerDataSource(consumerId uuid.UUID) (err error, streamIterator <-chan Item)
+type Publisher interface {
+	Publish(item Item) error
 }
 
-type memoryStream struct {
-	items            []Item
-	context          Context
-	buffer           chan Item
-	lock             sync.Mutex
-	consumerChannels map[uuid.UUID]chan<- Item
+type Iterator interface {
+	Start(chan<- Item)
 }
 
-func (ms *memoryStream) CreateConsumerDataSource(consumerId uuid.UUID) (err error, streamIterator <-chan Item) {
-
-	// Create channel between source and sink
-	channel := make(chan Item, 0)
-
-	// Register channel for consumer
-	ms.consumerChannels[consumerId] = channel
-
-	// return other part of channel to consumer
-	streamIterator = channel
-
-	return
-}
-
-func (ms *memoryStream) RegisterPublisher(channel <-chan Item) {
-	go ms.startPublisher(channel)
-}
-
-func (ms *memoryStream) startPublisher(channel <-chan Item) {
-	for item := range channel {
-		ms.buffer <- item
-	}
-}
-
-func (ms *memoryStream) startPublishing() {
-	for item := range ms.buffer {
-		ms.add(item)
-		go ms.broadcast(item)
-	}
-}
-
-func (ms *memoryStream) broadcast(item Item) {
-	for _, channel := range ms.consumerChannels {
-		channel <- item
-	}
-}
-
-func (ms *memoryStream) add(item Item) {
-
-	ms.lock.Lock()
-	defer ms.lock.Unlock()
-
-	ms.items = append(ms.items, item)
-}
-
-func NewStream(context Context) *memoryStream {
-	items := make([]Item, 0)
-
-	newStream := memoryStream{
-		items:            items,
-		context:          context,
-		buffer:           make(chan Item, BufferSize),
-		consumerChannels: make(map[uuid.UUID]chan<- Item, BufferSize),
+func NewStream() *stream {
+	buffer := make(chan Item, BufferSize)
+	items := make([]Item, BufferSize)
+	newStream := stream{
+		items:  items,
+		buffer: buffer,
 	}
 
-	go newStream.startPublishing()
+	go newStream.run()
 
 	return &newStream
+
+}
+
+func (s *stream) Publish(item Item) error {
+	// TODO make implementation which will be non blocking always
+	s.buffer <- item
+	return nil
+}
+
+/////////////
+// PRIVATE //
+/////////////
+
+type stream struct {
+	items  []Item
+	buffer chan Item
+	lock   sync.Mutex
+}
+
+func (s *stream) Start(items chan<- Item) {
+	//TODO implement me
+	panic("implement me")
+}
+
+// run starts operation of stream
+func (s *stream) run() {
+	for item := range s.buffer {
+		s.add(item)
+	}
+}
+
+// add item to items stored in stream
+func (s *stream) add(item Item) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	s.items = append(s.items, item)
 }
