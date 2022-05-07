@@ -3,6 +3,7 @@ package stream_test
 import (
 	"pilsner/internal/stream"
 	"testing"
+	"time"
 )
 
 func TestCreatingAndConsumingStream(t *testing.T) {
@@ -37,6 +38,8 @@ func TestCreatingAndConsumingStream(t *testing.T) {
 	for i := 10; i < 20; i++ {
 		newStream.Publish(stream.Item{Id: i})
 	}
+
+	time.Sleep(10 * time.Second)
 
 	//if result == nil {
 	//	t.Errorf("got %q, wanted %q", got, want)
