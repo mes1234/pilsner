@@ -6,16 +6,7 @@ import (
 	"time"
 )
 
-/////////////
-// PUBLIC  //
-/////////////
-
-const BufferSize int = 100
-
-type Item struct {
-	Id      int
-	content []byte
-}
+const BufferSize int = 1000000
 
 type Publisher interface {
 	Publish(item Item) error
@@ -25,30 +16,27 @@ type Iterator interface {
 	Start(Delegate)
 }
 
-type Delegate struct {
-	channel chan<- Item
-	name    string
-}
-
-func NewDelegate(channel chan<- Item, name string) *Delegate {
-	return &Delegate{
-		name:    name,
-		channel: channel,
-	}
+type Terminator interface {
+	Terminate()
 }
 
 func NewStream() *stream {
 	buffer := make(chan Item, BufferSize)
-	items := make([]Item, 0)
+	items := NewDataSource()
 	newStream := stream{
-		items:  items,
-		buffer: buffer,
+		items:      items,
+		buffer:     buffer,
+		terminator: make(chan struct{}),
 	}
 
-	go newStream.run()
+	go newStream.run(newStream.terminator)
 
 	return &newStream
 
+}
+
+func (s *stream) Terminate() {
+	s.terminator <- struct{}{}
 }
 
 func (s *stream) Publish(item Item) error {
@@ -57,16 +45,12 @@ func (s *stream) Publish(item Item) error {
 	return nil
 }
 
-/////////////
-// PRIVATE //
-/////////////
-
 type stream struct {
-	items       []Item
-	buffer      chan Item
+	items       Data
 	lock        sync.Mutex
-	position    int
-	subscribers []chan<- Item
+	buffer      chan Item
+	subscribers []subscriber
+	terminator  chan struct{}
 }
 
 func (s *stream) Start(delegate Delegate) {
@@ -78,7 +62,7 @@ func (s *stream) Start(delegate Delegate) {
 	s.attach(delegate, wg)
 
 	// begin sync up
-	go s.read(delegate, wg)
+	go s.read(delegate, wg, s.items.GetPosition())
 
 }
 
@@ -89,9 +73,11 @@ func buildWaitGroup() *sync.WaitGroup {
 	return &wg
 }
 
-func (s *stream) read(delegate Delegate, wg *sync.WaitGroup) {
+func (s *stream) read(delegate Delegate, wg *sync.WaitGroup, length int) {
 	log.Printf("Start publishing historical data for delegate: %s\n", delegate.name)
-	for _, item := range s.items {
+
+	for i := 0; i <= length; i++ {
+		item := s.items.Get(i)
 		delegate.channel <- item
 		log.Printf("Published historical data for delegate %s item: %d\n", delegate.name, item.Id)
 	}
@@ -99,62 +85,40 @@ func (s *stream) read(delegate Delegate, wg *sync.WaitGroup) {
 	log.Printf("Completed publishing historical data for delegate: %s\n", delegate.name)
 }
 
-// run starts operation of stream
-func (s *stream) run() {
-	for item := range s.buffer {
-		s.add(item)
-	}
-}
-
 func (s *stream) attach(delegate Delegate, wg *sync.WaitGroup) {
 
 	log.Printf("Requested to attach delegate: %s to new data in stream \n", delegate.name)
+
+	newSubscriber := subscriber{
+		channel: delegate,
+		wg:      wg,
+	}
+
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
-	// Create sync time buffer
-	buf := make(chan Item, BufferSize)
 	// Attach buffer to broadcaster so new data is queued
-	s.subscribers = append(s.subscribers, buf)
+	s.subscribers = append(s.subscribers, newSubscriber)
 	log.Printf("Successfully attached delegate: %s to new data in stream \n", delegate.name)
 
-	// start shuffling data between buffer and delegate
-	go shuffle(buf, delegate.channel, wg)
 }
 
-// shuffle data from source to destination when waiter is ready
-func shuffle(source <-chan Item, destination chan<- Item, waiter *sync.WaitGroup) {
-	waiter.Wait()
-
+func (s *stream) run(terminate <-chan struct{}) {
 	for {
 		select {
-		case msg := <-source:
-			select {
-			case destination <- msg:
-				log.Printf("Successfully shuffled data to: <> id:%d\n", msg.Id)
-			case <-time.After(time.Microsecond):
-				log.Printf("Buffer full need to wait")
+		case <-terminate:
+			log.Printf("Terminating stream operation")
+			return
+		case item := <-s.buffer:
+			// save item to stream
+			s.items.Put(item)
+			for _, sub := range s.subscribers {
+				sub.shuffle(item)
 			}
-
+		default:
+			time.Sleep(100 * time.Millisecond)
+			log.Printf("No data waiting...")
 		}
 	}
 
-}
-
-// add item to items stored in stream
-func (s *stream) add(item Item) {
-	s.lock.Lock()
-	defer s.lock.Unlock()
-
-	s.items = append(s.items, item)
-	s.position = len(s.items)
-	s.broadcast(item)
-}
-
-// broadcast information about new item in stream to all subscribers
-func (s *stream) broadcast(item Item) {
-	for _, subs := range s.subscribers {
-		subs <- item
-		log.Printf("Successfully broadcasted to delegate: %s new data %d \n", "dummy", item.Id)
-	}
 }

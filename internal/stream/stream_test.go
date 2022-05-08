@@ -1,6 +1,7 @@
 package stream_test
 
 import (
+	"log"
 	"pilsner/internal/stream"
 	"testing"
 	"time"
@@ -8,40 +9,69 @@ import (
 
 func TestCreatingAndConsumingStream(t *testing.T) {
 
-	newStream := stream.NewStream()
+	myStream := stream.NewStream()
 
-	sub := make(chan stream.Item, 100)
+	sub1 := make(chan stream.Item, 100)
+	sub2 := make(chan stream.Item, 100)
 
-	delegate := stream.NewDelegate(sub, "first")
+	delegate1 := stream.NewDelegate(sub1, "first")
+	delegate2 := stream.NewDelegate(sub2, "second")
 
-	for i := 1; i < 5; i++ {
+	counter := 0
+
+	go publishDataToStream(10, myStream, &counter)
+
+	// attach new delegate to stream
+	myStream.Start(*delegate1)
+
+	time.Sleep(2 * time.Second)
+
+	// attach new delegate to stream
+	myStream.Start(*delegate2)
+
+	time.Sleep(2 * time.Second)
+
+	for i := 0; i < counter; i++ {
+		item := <-sub1
+		if item.Id != i {
+			t.Errorf("for sub1 got item with counter %d but expected %d", item.Id, i)
+		}
+	}
+
+	for i := 0; i < counter; i++ {
+		item := <-sub2
+		if item.Id != i {
+			t.Errorf("for sub2 got item with counter %d but expected %d", item.Id, i)
+		}
+	}
+
+	log.Printf("Processed %d", counter)
+	time.Sleep(2 * time.Second)
+
+	sub3 := make(chan stream.Item, 100)
+	delegate3 := stream.NewDelegate(sub3, "third")
+	// attach new delegate to stream
+	myStream.Start(*delegate3)
+
+	time.Sleep(2 * time.Nanosecond)
+
+	for i := 0; i < counter; i++ {
+		item := <-sub3
+		if item.Id != i {
+			t.Errorf("for sub3 got item with counter %d but expected %d", item.Id, i)
+		}
+	}
+
+	myStream.Terminate()
+}
+
+func publishDataToStream(count int, newStream stream.Publisher, counter *int) {
+	for i := 0; i < count; i++ {
 		newStream.Publish(stream.Item{
-			Id: i,
+			Id: *counter,
 		})
+		log.Printf("Added to stream %d item", *counter)
+		time.Sleep(time.Nanosecond)
+		*counter++
 	}
-
-	newStream.Start(*delegate)
-
-	for i := 5; i < 10; i++ {
-		newStream.Publish(stream.Item{Id: i})
-	}
-
-	//for i := 1; i < 10; i++ {
-	//	result := <-sub
-	//	fmt.Printf("got 1 item %d\n", result.Id)
-	//}
-
-	delegate2 := stream.NewDelegate(sub, "second")
-
-	newStream.Start(*delegate2)
-
-	for i := 10; i < 20; i++ {
-		newStream.Publish(stream.Item{Id: i})
-	}
-
-	time.Sleep(10 * time.Second)
-
-	//if result == nil {
-	//	t.Errorf("got %q, wanted %q", got, want)
-	//}
 }
