@@ -6,18 +6,12 @@ import (
 	"time"
 )
 
-const BufferSize int = 1000000
-
 type Publisher interface {
 	Publish(item Item) error
 }
 
-type Iterator interface {
-	Start(Delegate)
-}
-
-type Terminator interface {
-	Terminate()
+type Streamer interface {
+	Stream(Delegate)
 }
 
 func NewStream() *stream {
@@ -35,10 +29,6 @@ func NewStream() *stream {
 
 }
 
-func (s *stream) Terminate() {
-	s.terminator <- struct{}{}
-}
-
 func (s *stream) Publish(item Item) error {
 	// TODO make implementation which will be nonblocking always
 	s.buffer <- item
@@ -53,7 +43,7 @@ type stream struct {
 	terminator  chan struct{}
 }
 
-func (s *stream) Start(delegate Delegate) {
+func (s *stream) Stream(delegate Delegate) {
 
 	// wg will indicate when sync up end and new data can be streamed
 	wg := buildWaitGroup()
@@ -62,25 +52,24 @@ func (s *stream) Start(delegate Delegate) {
 	s.attach(delegate, wg)
 
 	// begin sync up
-	go s.read(delegate, wg, s.items.GetPosition())
+	go s.read(delegate, wg, s.items.GetIterator())
 
 }
 
 func buildWaitGroup() *sync.WaitGroup {
 	var wg sync.WaitGroup
-
 	wg.Add(1)
 	return &wg
 }
 
-func (s *stream) read(delegate Delegate, wg *sync.WaitGroup, length int) {
-	log.Printf("Start publishing historical data for delegate: %s\n", delegate.name)
+func (s *stream) read(delegate Delegate, wg *sync.WaitGroup, iterator Iterator) {
+	log.Printf("Stream publishing historical data for delegate: %s\n", delegate.name)
 
-	for i := 0; i <= length; i++ {
-		item := s.items.Get(i)
+	for next, item := iterator.Next(); next; next, item = iterator.Next() {
 		delegate.channel <- item
 		log.Printf("Published historical data for delegate %s item: %d\n", delegate.name, item.Id)
 	}
+
 	wg.Done()
 	log.Printf("Completed publishing historical data for delegate: %s\n", delegate.name)
 }
@@ -115,8 +104,7 @@ func (s *stream) run(terminate <-chan struct{}) {
 			for _, sub := range s.subscribers {
 				sub.shuffle(item)
 			}
-		default:
-			time.Sleep(100 * time.Millisecond)
+		case <-time.After(Delay):
 			log.Printf("No data waiting...")
 		}
 	}

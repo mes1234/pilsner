@@ -19,17 +19,16 @@ func NewDataSource() *items {
 }
 
 type Data interface {
-	Get(position int) Item
+	GetIterator() Iterator
 	Put(item Item)
-	GetPosition() int
+}
+
+func (i *items) GetIterator() Iterator {
+	return NewIterator(&i.repository)
 }
 
 func (i *items) Get(position int) Item {
 	return i.repository[position]
-}
-
-func (i *items) GetPosition() int {
-	return len(i.repository) - 1
 }
 
 func (i *items) Put(item Item) {
