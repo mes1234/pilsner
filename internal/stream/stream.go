@@ -2,9 +2,9 @@ package stream
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"sync"
-	"time"
 )
 
 type Publisher interface {
@@ -17,23 +17,24 @@ type Streamer interface {
 
 func NewStream(ctx context.Context) *stream {
 	buffer := make(chan Item, BufferSize)
-	items := NewDataSource()
+	items := NewDataSource(ctx)
 	newStream := stream{
 		items:      items,
 		buffer:     buffer,
 		terminator: ctx,
 	}
 
-	go newStream.run(newStream.terminator)
-
 	return &newStream
-
 }
 
 func (s *stream) Publish(item Item) error {
-	// TODO make implementation which will be nonblocking always
-	s.buffer <- item
-	return nil
+	select {
+	case <-s.terminator.Done():
+		return fmt.Errorf("stream operation ended")
+	default:
+		s.items.Put(item)
+		return nil
+	}
 }
 
 type stream struct {
@@ -43,8 +44,13 @@ type stream struct {
 	terminator context.Context
 }
 
-func (s *stream) Stream(delegate Delegate) {
-	go s.read(delegate, s.items.GetIterator(s.terminator))
+func (s *stream) Stream(delegate Delegate) context.CancelFunc {
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	go s.read(delegate, s.items.GetIterator(ctx))
+
+	return cancel
 }
 
 func (s *stream) read(delegate Delegate, iterator Iterator) {
@@ -55,18 +61,4 @@ func (s *stream) read(delegate Delegate, iterator Iterator) {
 	}
 
 	log.Printf("Completed historical data for delegate: %s\n", delegate.name)
-}
-
-func (s *stream) run(terminate context.Context) {
-	for {
-		select {
-		case <-terminate.Done():
-			log.Printf("Terminating stream operation")
-			return
-		case item := <-s.buffer:
-			s.items.Put(item)
-		case <-time.After(Delay):
-		}
-	}
-
 }

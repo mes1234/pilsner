@@ -3,6 +3,7 @@ package stream
 import (
 	"context"
 	"sync"
+	"time"
 )
 
 const NoItemId = -1
@@ -17,12 +18,16 @@ type items struct {
 	repository []Item
 	notifiers  []chan int
 	lock       sync.Mutex
+	ctx        context.Context
 }
 
-func NewDataSource() *items {
+func NewDataSource(ctx context.Context) *items {
 	repository := make([]Item, 0)
 
-	return &items{repository: repository}
+	return &items{
+		repository: repository,
+		ctx:        ctx,
+	}
 }
 
 type Data interface {
@@ -33,7 +38,7 @@ type Data interface {
 
 func (i *items) GetIterator(terminate context.Context) Iterator {
 
-	notifier := make(chan int, 10)
+	notifier := make(chan int, 20)
 
 	i.notifiers = append(i.notifiers, notifier)
 
@@ -51,11 +56,24 @@ func (i *items) TryGet(position int) (error, Item) {
 }
 
 func (i *items) Put(item Item) {
-	i.lock.Lock()
-	defer i.lock.Unlock()
-	i.repository = append(i.repository, item)
 
-	for _, notifier := range i.notifiers {
-		notifier <- item.Id
+	select {
+	case <-i.ctx.Done():
+		return
+	default:
+		i.lock.Lock()
+		defer i.lock.Unlock()
+		i.repository = append(i.repository, item)
+
+		go func() {
+			for _, notifier := range i.notifiers {
+				select {
+				case notifier <- item.Id:
+				case <-time.After(Delay):
+
+				}
+
+			}
+		}()
 	}
 }

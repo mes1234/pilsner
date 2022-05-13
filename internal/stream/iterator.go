@@ -16,7 +16,7 @@ type iterator struct {
 	replayFinished bool
 }
 
-func (i *iterator) observeNotifier() (skip bool, next bool, item Item) {
+func (i *iterator) observeStream() (skip bool, next bool, item Item) {
 	select {
 	case pos := <-i.notifier:
 
@@ -30,6 +30,11 @@ func (i *iterator) observeNotifier() (skip bool, next bool, item Item) {
 		if err != nil {
 			// Error occurred and consumer is failed
 			return false, false, Item{}
+		}
+
+		if item.Id == NoItemId {
+			i.replayFinished = true
+			return true, false, Item{}
 		}
 
 		// Successful data
@@ -75,7 +80,7 @@ func (i *iterator) Next() (next bool, item Item) {
 			var item Item
 
 			if i.replayFinished {
-				skip, next, item = i.observeNotifier()
+				skip, next, item = i.observeStream()
 			} else {
 				skip, next, item = i.replayStream()
 			}
