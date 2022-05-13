@@ -3,7 +3,6 @@ package stream
 import (
 	"context"
 	"sync"
-	"time"
 )
 
 const NoItemId = -1
@@ -38,7 +37,7 @@ type Data interface {
 
 func (i *items) GetIterator(terminate context.Context) Iterator {
 
-	notifier := make(chan int, 20)
+	notifier := make(chan int, 2000)
 
 	i.notifiers = append(i.notifiers, notifier)
 
@@ -65,15 +64,10 @@ func (i *items) Put(item Item) {
 		defer i.lock.Unlock()
 		i.repository = append(i.repository, item)
 
-		go func() {
-			for _, notifier := range i.notifiers {
-				select {
-				case notifier <- item.Id:
-				case <-time.After(Delay):
-
-				}
-
+		for _, notifier := range i.notifiers {
+			select {
+			case notifier <- item.Id:
 			}
-		}()
+		}
 	}
 }
