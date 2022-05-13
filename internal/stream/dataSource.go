@@ -2,9 +2,10 @@ package stream
 
 import (
 	"context"
-	"fmt"
 	"sync"
 )
+
+const NoItemId = -1
 
 type Item struct {
 	Id      int
@@ -43,7 +44,9 @@ func (i *items) TryGet(position int) (error, Item) {
 	if len(i.repository)-1 >= position {
 		return nil, i.repository[position]
 	} else {
-		return fmt.Errorf("no Item"), Item{}
+		return nil, Item{
+			Id: NoItemId,
+		}
 	}
 }
 
