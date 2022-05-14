@@ -40,7 +40,7 @@ func (i *iterator) observeStream() (skip bool, next bool, item Item) {
 		// Successful data
 		return false, true, Item{
 			Id:      item.Id,
-			content: item.content,
+			Content: item.Content,
 			Source:  "Notifier",
 		}
 	}
@@ -63,7 +63,7 @@ func (i *iterator) replayStream() (skip bool, next bool, item Item) {
 	i.position++
 	return false, true, Item{
 		Id:      item.Id,
-		content: item.content,
+		Content: item.Content,
 		Source:  "Iterator",
 	}
 
@@ -92,7 +92,7 @@ func (i *iterator) Next() (next bool, item Item) {
 
 }
 
-func NewIterator(data Data, notifier <-chan int, terminate context.Context) Iterator {
+func newIterator(data Data, notifier <-chan int, terminate context.Context) Iterator {
 	return &iterator{
 		data:           data,
 		terminator:     terminate,

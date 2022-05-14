@@ -2,6 +2,8 @@ package stream
 
 import (
 	"context"
+	"github.com/google/uuid"
+	"log"
 	"sync"
 )
 
@@ -9,13 +11,13 @@ const NoItemId = -1
 
 type Item struct {
 	Id      int
-	content []byte
+	Content interface{}
 	Source  string
 }
 
 type items struct {
 	repository []Item
-	notifiers  []chan int
+	notifiers  map[uuid.UUID]chan int
 	lock       sync.Mutex
 	ctx        context.Context
 }
@@ -26,6 +28,7 @@ func NewDataSource(ctx context.Context) *items {
 	return &items{
 		repository: repository,
 		ctx:        ctx,
+		notifiers:  make(map[uuid.UUID]chan int),
 	}
 }
 
@@ -37,11 +40,33 @@ type Data interface {
 
 func (i *items) GetIterator(terminate context.Context) Iterator {
 
+	notifier := i.addNotifier(terminate)
+
+	return newIterator(i, notifier, terminate)
+}
+
+func (i *items) addNotifier(terminate context.Context) <-chan int {
+
 	notifier := make(chan int, 2000)
 
-	i.notifiers = append(i.notifiers, notifier)
+	id := uuid.New()
 
-	return NewIterator(i, notifier, terminate)
+	i.notifiers[id] = notifier
+
+	// Schedule removal in case of termination
+	go i.removeNotifier(id, terminate)
+
+	return notifier
+}
+
+func (i *items) removeNotifier(id uuid.UUID, terminate context.Context) {
+	select {
+	case <-terminate.Done():
+		i.lock.Lock()
+		defer i.lock.Unlock()
+		delete(i.notifiers, id)
+		log.Printf("Notifier %s was removed", id)
+	}
 }
 
 func (i *items) TryGet(position int) (error, Item) {

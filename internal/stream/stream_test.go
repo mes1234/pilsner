@@ -2,28 +2,11 @@ package stream_test
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"pilsner/internal/stream"
-	"runtime"
 	"testing"
 	"time"
 )
-
-func TestCheckOs(t *testing.T) {
-	os := runtime.GOOS
-	switch os {
-	case "windows":
-		fmt.Println("Windows")
-	case "darwin":
-		fmt.Println("MAC operating system")
-	case "linux":
-		fmt.Println("Linux")
-	default:
-		fmt.Printf("%s.\n", os)
-	}
-
-}
 
 func TestConsumerOnline(t *testing.T) {
 
@@ -42,21 +25,12 @@ func TestConsumerOnline(t *testing.T) {
 
 	time.Sleep(5 * time.Second)
 
-	log.Printf("Processing %d", counter)
+	Verify(t, sub1)
 
-	var i = 0
-
-	for ; i < counter; i++ {
-		time.Sleep(time.Millisecond)
-		item := <-sub1
-		//	log.Printf("Got %d from %s expected %d", item.Id, item.Source, i)
-		if item.Id != i {
-			t.Errorf("for sub1 got item with counter %d but expected %d type : %s", item.Id, i, item.Source)
-		}
-	}
-	log.Printf("Processed %d", i)
 	cancelConsumer()
 	cancelStream()
+
+	time.Sleep(1 * time.Second)
 
 }
 
@@ -78,30 +52,77 @@ func TestConsumerLateAttach(t *testing.T) {
 
 	time.Sleep(5 * time.Second)
 
-	log.Printf("Processing %d", counter)
-
-	var i = 0
-
-	for ; i < counter; i++ {
-		time.Sleep(time.Millisecond)
-		item := <-sub1
-		//log.Printf("Got %d from %s expected %d", item.Id, item.Source, i)
-		if item.Id != i {
-			t.Errorf("for sub1 got item with counter %d but expected %d type : %s", item.Id, i, item.Source)
-		}
-	}
-
-	log.Printf("Processed %d", i)
+	Verify(t, sub1)
 
 	cancelConsumer()
 	cancelStream()
 
+	time.Sleep(1 * time.Second)
+}
+
+func TestConsumerRemoved(t *testing.T) {
+
+	ctx, cancelStream := context.WithCancel(context.Background())
+
+	myStream := stream.NewStream(ctx)
+	sub1 := make(chan stream.Item, 100)
+	delegate1 := stream.NewDelegate(sub1, "first")
+
+	counter := 0
+
+	go publishDataToStream(10000, myStream, time.Microsecond, &counter)
+
+	time.Sleep(2 * time.Second)
+	// attach new delegate to stream
+	cancelConsumer := myStream.Stream(*delegate1)
+
+	time.Sleep(1 * time.Second)
+
+	cancelConsumer()
+
+	time.Sleep(1 * time.Second)
+
+	log.Printf("Processing %d", counter)
+
+	Verify(t, sub1)
+
+	cancelStream()
+
+	time.Sleep(1 * time.Second)
+}
+
+func Verify(t *testing.T, sub1 chan stream.Item) {
+	var i = 0
+	var finishedFlag = false
+
+	for {
+		time.Sleep(time.Millisecond)
+		if finishedFlag {
+			break
+		}
+		select {
+		case item := <-sub1:
+			//log.Printf("Got %d from %s expected %d", item.Id, item.Source, i)
+			if item.Id != i {
+				t.Errorf("for sub1 got item with counter %d but expected %d type : %s", item.Id, i, item.Source)
+			}
+			i++
+		case <-time.After(2 * time.Second):
+			finishedFlag = true
+		}
+	}
 }
 
 func publishDataToStream(count int, newStream stream.Publisher, delay time.Duration, counter *int) {
 	for i := 0; i < count; i++ {
 		err := newStream.Publish(stream.Item{
 			Id: *counter,
+			Content: []byte{
+				0x01,
+				0x02,
+				0x03,
+			},
+			Source: "Publisher",
 		})
 		if err != nil {
 			return
