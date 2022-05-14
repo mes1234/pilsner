@@ -2,11 +2,28 @@ package stream_test
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"pilsner/internal/stream"
+	"runtime"
 	"testing"
 	"time"
 )
+
+func TestCheckOs(t *testing.T) {
+	os := runtime.GOOS
+	switch os {
+	case "windows":
+		fmt.Println("Windows")
+	case "darwin":
+		fmt.Println("MAC operating system")
+	case "linux":
+		fmt.Println("Linux")
+	default:
+		fmt.Printf("%s.\n", os)
+	}
+
+}
 
 func TestConsumerOnline(t *testing.T) {
 
@@ -30,7 +47,7 @@ func TestConsumerOnline(t *testing.T) {
 	var i = 0
 
 	for ; i < counter; i++ {
-		time.Sleep(time.Nanosecond)
+		time.Sleep(time.Millisecond)
 		item := <-sub1
 		//	log.Printf("Got %d from %s expected %d", item.Id, item.Source, i)
 		if item.Id != i {
@@ -66,7 +83,7 @@ func TestConsumerLateAttach(t *testing.T) {
 	var i = 0
 
 	for ; i < counter; i++ {
-		time.Sleep(time.Nanosecond)
+		time.Sleep(time.Millisecond)
 		item := <-sub1
 		//log.Printf("Got %d from %s expected %d", item.Id, item.Source, i)
 		if item.Id != i {
