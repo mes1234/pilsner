@@ -4,26 +4,28 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"pilsner/internal/communication"
+	"pilsner/internal/setup"
 	"sync"
 )
 
 type Publisher interface {
 	// Publish writes single item to stream
-	Publish(item Item) error
+	Publish(item communication.Item) error
 }
 
 type Streamer interface {
 	// Stream starts streaming given stream to delegate
 	//
 	// Streaming can be cancelled using returned CancelFunc
-	Stream(Delegate)
+	Stream(communication.Delegate)
 }
 
 func NewStream() (*stream, context.CancelFunc) {
 
 	ctx, cancelStream := context.WithCancel(context.Background())
 
-	buffer := make(chan Item, BufferSize)
+	buffer := make(chan communication.Item, setup.BufferSize)
 	items := NewDataSource(ctx)
 	newStream := stream{
 		items:      items,
@@ -34,7 +36,7 @@ func NewStream() (*stream, context.CancelFunc) {
 	return &newStream, cancelStream
 }
 
-func (s *stream) Publish(item Item) error {
+func (s *stream) Publish(item communication.Item) error {
 	select {
 	case <-s.terminator.Done():
 		return fmt.Errorf("stream operation ended")
@@ -46,12 +48,12 @@ func (s *stream) Publish(item Item) error {
 
 type stream struct {
 	items      Data
-	lock       sync.Mutex
-	buffer     chan Item
+	lock       sync.RWMutex
+	buffer     chan communication.Item
 	terminator context.Context
 }
 
-func (s *stream) Stream(delegate Delegate) context.CancelFunc {
+func (s *stream) Stream(delegate communication.Delegate) context.CancelFunc {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -60,7 +62,7 @@ func (s *stream) Stream(delegate Delegate) context.CancelFunc {
 	return cancel
 }
 
-func (s *stream) read(delegate Delegate, iterator Iterator) {
+func (s *stream) read(delegate communication.Delegate, iterator Iterator) {
 	log.Printf("Stream publishing historical data for delegate: %s\n", delegate.Name)
 
 	for next, item := iterator.Next(); next; next, item = iterator.Next() {

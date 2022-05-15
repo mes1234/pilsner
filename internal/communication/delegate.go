@@ -1,4 +1,8 @@
-package stream
+package communication
+
+import (
+	"pilsner/internal/setup"
+)
 
 type Delegate struct {
 	Channel chan Item
@@ -7,7 +11,7 @@ type Delegate struct {
 
 func NewDelegate(name string) *Delegate {
 
-	subscriber := make(chan Item, BufferSize)
+	subscriber := make(chan Item, setup.BufferSize)
 
 	return &Delegate{
 		Name:    name,

@@ -2,6 +2,7 @@ package stream_test
 
 import (
 	"log"
+	"pilsner/internal/communication"
 	"pilsner/internal/stream"
 	"testing"
 	"time"
@@ -11,7 +12,7 @@ func TestConsumerOnline(t *testing.T) {
 
 	myStream, cancelStream := stream.NewStream()
 
-	delegate1 := stream.NewDelegate("first")
+	delegate1 := communication.NewDelegate("first")
 
 	counter := 0
 
@@ -35,7 +36,7 @@ func TestConsumerLateAttach(t *testing.T) {
 
 	myStream, cancelStream := stream.NewStream()
 
-	delegate1 := stream.NewDelegate("first")
+	delegate1 := communication.NewDelegate("first")
 
 	counter := 0
 
@@ -59,7 +60,7 @@ func TestConsumerRemoved(t *testing.T) {
 
 	myStream, cancelStream := stream.NewStream()
 
-	delegate1 := stream.NewDelegate("first")
+	delegate1 := communication.NewDelegate("first")
 
 	counter := 0
 
@@ -84,7 +85,7 @@ func TestConsumerRemoved(t *testing.T) {
 	time.Sleep(1 * time.Second)
 }
 
-func Verify(t *testing.T, sub1 stream.Delegate) {
+func Verify(t *testing.T, sub1 communication.Delegate) {
 	var i = 0
 	var finishedFlag = false
 
@@ -108,7 +109,7 @@ func Verify(t *testing.T, sub1 stream.Delegate) {
 
 func publishDataToStream(count int, newStream stream.Publisher, delay time.Duration, counter *int) {
 	for i := 0; i < count; i++ {
-		err := newStream.Publish(stream.Item{
+		err := newStream.Publish(communication.Item{
 			Id: *counter,
 			Content: []byte{
 				0x01,

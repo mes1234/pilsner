@@ -4,26 +4,21 @@ import (
 	"context"
 	"github.com/google/uuid"
 	"log"
+	"pilsner/internal/communication"
 	"sync"
 )
 
 const NoItemId = -1
 
-type Item struct {
-	Id      int
-	Content interface{}
-	Source  string
-}
-
 type items struct {
-	repository []Item
+	repository []communication.Item
 	notifiers  map[uuid.UUID]chan int
 	lock       sync.Mutex
 	ctx        context.Context
 }
 
 func NewDataSource(ctx context.Context) *items {
-	repository := make([]Item, 0)
+	repository := make([]communication.Item, 0)
 
 	return &items{
 		repository: repository,
@@ -34,8 +29,8 @@ func NewDataSource(ctx context.Context) *items {
 
 type Data interface {
 	GetIterator(terminate context.Context) Iterator
-	Put(item Item)
-	TryGet(position int) (error, Item)
+	Put(item communication.Item)
+	TryGet(position int) (error, communication.Item)
 }
 
 func (i *items) GetIterator(terminate context.Context) Iterator {
@@ -69,17 +64,17 @@ func (i *items) removeNotifier(id uuid.UUID, terminate context.Context) {
 	}
 }
 
-func (i *items) TryGet(position int) (error, Item) {
+func (i *items) TryGet(position int) (error, communication.Item) {
 	if len(i.repository)-1 >= position {
 		return nil, i.repository[position]
 	} else {
-		return nil, Item{
+		return nil, communication.Item{
 			Id: NoItemId,
 		}
 	}
 }
 
-func (i *items) Put(item Item) {
+func (i *items) Put(item communication.Item) {
 
 	select {
 	case <-i.ctx.Done():
