@@ -53,13 +53,9 @@ type stream struct {
 	terminator context.Context
 }
 
-func (s *stream) Stream(delegate communication.Delegate) context.CancelFunc {
+func (s *stream) Stream(delegate communication.Delegate) {
 
-	ctx, cancel := context.WithCancel(context.Background())
-
-	go s.read(delegate, s.items.GetIterator(ctx))
-
-	return cancel
+	go s.read(delegate, s.items.GetIterator(delegate.Context))
 }
 
 func (s *stream) read(delegate communication.Delegate, iterator Iterator) {

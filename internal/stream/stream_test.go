@@ -19,13 +19,13 @@ func TestConsumerOnline(t *testing.T) {
 	go publishDataToStream(10000, myStream, time.Microsecond, &counter)
 
 	// attach new delegate to stream
-	cancelConsumer := myStream.Stream(*delegate1)
+	myStream.Stream(*delegate1)
 
 	time.Sleep(5 * time.Second)
 
 	Verify(t, *delegate1)
 
-	cancelConsumer()
+	delegate1.Cancel()
 	cancelStream()
 
 	time.Sleep(1 * time.Second)
@@ -44,13 +44,13 @@ func TestConsumerLateAttach(t *testing.T) {
 
 	time.Sleep(2 * time.Second)
 	// attach new delegate to stream
-	cancelConsumer := myStream.Stream(*delegate1)
+	myStream.Stream(*delegate1)
 
 	time.Sleep(5 * time.Second)
 
 	Verify(t, *delegate1)
 
-	cancelConsumer()
+	delegate1.Cancel()
 	cancelStream()
 
 	time.Sleep(1 * time.Second)
@@ -68,11 +68,11 @@ func TestConsumerRemoved(t *testing.T) {
 
 	time.Sleep(2 * time.Second)
 	// attach new delegate to stream
-	cancelConsumer := myStream.Stream(*delegate1)
+	myStream.Stream(*delegate1)
 
 	time.Sleep(1 * time.Second)
 
-	cancelConsumer()
+	delegate1.Cancel()
 
 	time.Sleep(1 * time.Second)
 
