@@ -1,13 +1,16 @@
 package stream
 
 type Delegate struct {
-	channel chan Item
-	name    string
+	Channel chan Item
+	Name    string
 }
 
-func NewDelegate(channel chan Item, name string) *Delegate {
+func NewDelegate(name string) *Delegate {
+
+	subscriber := make(chan Item, BufferSize)
+
 	return &Delegate{
-		name:    name,
-		channel: channel,
+		Name:    name,
+		Channel: subscriber,
 	}
 }

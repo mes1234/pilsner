@@ -8,14 +8,21 @@ import (
 )
 
 type Publisher interface {
+	// Publish writes single item to stream
 	Publish(item Item) error
 }
 
 type Streamer interface {
+	// Stream starts streaming given stream to delegate
+	//
+	// Streaming can be cancelled using returned CancelFunc
 	Stream(Delegate)
 }
 
-func NewStream(ctx context.Context) *stream {
+func NewStream() (*stream, context.CancelFunc) {
+
+	ctx, cancelStream := context.WithCancel(context.Background())
+
 	buffer := make(chan Item, BufferSize)
 	items := NewDataSource(ctx)
 	newStream := stream{
@@ -24,7 +31,7 @@ func NewStream(ctx context.Context) *stream {
 		terminator: ctx,
 	}
 
-	return &newStream
+	return &newStream, cancelStream
 }
 
 func (s *stream) Publish(item Item) error {
@@ -54,11 +61,11 @@ func (s *stream) Stream(delegate Delegate) context.CancelFunc {
 }
 
 func (s *stream) read(delegate Delegate, iterator Iterator) {
-	log.Printf("Stream publishing historical data for delegate: %s\n", delegate.name)
+	log.Printf("Stream publishing historical data for delegate: %s\n", delegate.Name)
 
 	for next, item := iterator.Next(); next; next, item = iterator.Next() {
-		delegate.channel <- item
+		delegate.Channel <- item
 	}
 
-	log.Printf("Completed historical data for delegate: %s\n", delegate.name)
+	log.Printf("Completed historical data for delegate: %s\n", delegate.Name)
 }

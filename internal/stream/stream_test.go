@@ -1,7 +1,6 @@
 package stream_test
 
 import (
-	"context"
 	"log"
 	"pilsner/internal/stream"
 	"testing"
@@ -10,11 +9,9 @@ import (
 
 func TestConsumerOnline(t *testing.T) {
 
-	ctx, cancelStream := context.WithCancel(context.Background())
+	myStream, cancelStream := stream.NewStream()
 
-	myStream := stream.NewStream(ctx)
-	sub1 := make(chan stream.Item, 100)
-	delegate1 := stream.NewDelegate(sub1, "first")
+	delegate1 := stream.NewDelegate("first")
 
 	counter := 0
 
@@ -25,7 +22,7 @@ func TestConsumerOnline(t *testing.T) {
 
 	time.Sleep(5 * time.Second)
 
-	Verify(t, sub1)
+	Verify(t, *delegate1)
 
 	cancelConsumer()
 	cancelStream()
@@ -36,11 +33,9 @@ func TestConsumerOnline(t *testing.T) {
 
 func TestConsumerLateAttach(t *testing.T) {
 
-	ctx, cancelStream := context.WithCancel(context.Background())
+	myStream, cancelStream := stream.NewStream()
 
-	myStream := stream.NewStream(ctx)
-	sub1 := make(chan stream.Item, 100)
-	delegate1 := stream.NewDelegate(sub1, "first")
+	delegate1 := stream.NewDelegate("first")
 
 	counter := 0
 
@@ -52,7 +47,7 @@ func TestConsumerLateAttach(t *testing.T) {
 
 	time.Sleep(5 * time.Second)
 
-	Verify(t, sub1)
+	Verify(t, *delegate1)
 
 	cancelConsumer()
 	cancelStream()
@@ -62,11 +57,9 @@ func TestConsumerLateAttach(t *testing.T) {
 
 func TestConsumerRemoved(t *testing.T) {
 
-	ctx, cancelStream := context.WithCancel(context.Background())
+	myStream, cancelStream := stream.NewStream()
 
-	myStream := stream.NewStream(ctx)
-	sub1 := make(chan stream.Item, 100)
-	delegate1 := stream.NewDelegate(sub1, "first")
+	delegate1 := stream.NewDelegate("first")
 
 	counter := 0
 
@@ -84,14 +77,14 @@ func TestConsumerRemoved(t *testing.T) {
 
 	log.Printf("Processing %d", counter)
 
-	Verify(t, sub1)
+	Verify(t, *delegate1)
 
 	cancelStream()
 
 	time.Sleep(1 * time.Second)
 }
 
-func Verify(t *testing.T, sub1 chan stream.Item) {
+func Verify(t *testing.T, sub1 stream.Delegate) {
 	var i = 0
 	var finishedFlag = false
 
@@ -101,7 +94,7 @@ func Verify(t *testing.T, sub1 chan stream.Item) {
 			break
 		}
 		select {
-		case item := <-sub1:
+		case item := <-sub1.Channel:
 			//log.Printf("Got %d from %s expected %d", item.Id, item.Source, i)
 			if item.Id != i {
 				t.Errorf("for sub1 got item with counter %d but expected %d type : %s", item.Id, i, item.Source)
