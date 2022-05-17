@@ -2,6 +2,7 @@ package stream
 
 import (
 	"context"
+	"fmt"
 	"github.com/google/uuid"
 	"log"
 	"pilsner/internal/communication"
@@ -68,9 +69,7 @@ func (i *items) TryGet(position int) (error, communication.Item) {
 	if len(i.repository)-1 >= position {
 		return nil, i.repository[position]
 	} else {
-		return nil, communication.Item{
-			Id: NoItemId,
-		}
+		return fmt.Errorf("no item with Id : %d", position), communication.Item{}
 	}
 }
 
@@ -82,11 +81,13 @@ func (i *items) Put(item communication.Item) {
 	default:
 		i.lock.Lock()
 		defer i.lock.Unlock()
+		item.Id = len(i.repository)
 		i.repository = append(i.repository, item)
+		id := len(i.repository) - 1
 
 		for _, notifier := range i.notifiers {
 			select {
-			case notifier <- item.Id:
+			case notifier <- id:
 			}
 		}
 	}

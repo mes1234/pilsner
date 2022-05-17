@@ -110,7 +110,6 @@ func Verify(t *testing.T, sub1 communication.Delegate) {
 func publishDataToStream(count int, newStream stream.Publisher, delay time.Duration, counter *int) {
 	for i := 0; i < count; i++ {
 		err := newStream.Publish(communication.Item{
-			Id: *counter,
 			Content: []byte{
 				0x01,
 				0x02,
