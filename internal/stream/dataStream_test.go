@@ -36,10 +36,14 @@ func TestDataSourceGetNoPut(t *testing.T) {
 
 	_ = ds.GetIterator(context.Background())
 
-	err, _ := ds.TryGet(0)
+	err, item := ds.TryGet(0)
 
-	if err == nil {
+	if err != nil {
 		t.Errorf("there should be error ")
+	}
+
+	if item.Id != stream.NoItemId {
+		t.Errorf("Expected no item ID recieved %d", item.Id)
 	}
 
 }

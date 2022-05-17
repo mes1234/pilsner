@@ -29,12 +29,11 @@ func (i *iterator) observeStream() (skip bool, next bool, item communication.Ite
 		err, item := i.data.TryGet(pos)
 
 		if err != nil {
-			// Error occurred and consumer.go is failed
+			// Error occurred and consumer is failed
 			return false, false, communication.Item{}
 		}
 
 		if item.Id == NoItemId {
-			i.replayFinished = true
 			return true, false, communication.Item{}
 		}
 
@@ -52,7 +51,7 @@ func (i *iterator) replayStream() (skip bool, next bool, item communication.Item
 	err, item := i.data.TryGet(i.position)
 
 	if err != nil {
-		// Error occurred and consumer.go is failed
+		// Error occurred and consumer is failed
 		return false, false, communication.Item{}
 	}
 
@@ -93,7 +92,7 @@ func (i *iterator) Next() (next bool, item communication.Item) {
 
 }
 
-func newIterator(data Data, notifier <-chan int, terminate context.Context) Iterator {
+func NewIterator(data Data, notifier <-chan int, terminate context.Context) Iterator {
 	return &iterator{
 		data:           data,
 		terminator:     terminate,

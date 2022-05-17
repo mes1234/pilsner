@@ -2,7 +2,6 @@ package stream
 
 import (
 	"context"
-	"fmt"
 	"github.com/google/uuid"
 	"log"
 	"pilsner/internal/communication"
@@ -38,7 +37,7 @@ func (i *items) GetIterator(terminate context.Context) Iterator {
 
 	notifier := i.addNotifier(terminate)
 
-	return newIterator(i, notifier, terminate)
+	return NewIterator(i, notifier, terminate)
 }
 
 func (i *items) addNotifier(terminate context.Context) <-chan int {
@@ -69,7 +68,9 @@ func (i *items) TryGet(position int) (error, communication.Item) {
 	if len(i.repository)-1 >= position {
 		return nil, i.repository[position]
 	} else {
-		return fmt.Errorf("no item with Id : %d", position), communication.Item{}
+		return nil, communication.Item{
+			Id: NoItemId,
+		}
 	}
 }
 
