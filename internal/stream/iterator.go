@@ -2,10 +2,11 @@ package stream
 
 import (
 	"context"
+	"pilsner/internal/communication"
 )
 
 type Iterator interface {
-	Next() (next bool, item Item)
+	Next() (next bool, item communication.Item)
 }
 
 type iterator struct {
@@ -16,29 +17,28 @@ type iterator struct {
 	replayFinished bool
 }
 
-func (i *iterator) observeStream() (skip bool, next bool, item Item) {
+func (i *iterator) observeStream() (skip bool, next bool, item communication.Item) {
 	select {
 	case pos := <-i.notifier:
 
 		if pos < i.position {
 			// Discard as old and already processed
-			return true, true, Item{}
+			return true, true, communication.Item{}
 		}
 
 		err, item := i.data.TryGet(pos)
 
 		if err != nil {
 			// Error occurred and consumer is failed
-			return false, false, Item{}
+			return false, false, communication.Item{}
 		}
 
 		if item.Id == NoItemId {
-			i.replayFinished = true
-			return true, false, Item{}
+			return true, false, communication.Item{}
 		}
 
 		// Successful data
-		return false, true, Item{
+		return false, true, communication.Item{
 			Id:      item.Id,
 			Content: item.Content,
 			Source:  "Notifier",
@@ -46,22 +46,22 @@ func (i *iterator) observeStream() (skip bool, next bool, item Item) {
 	}
 }
 
-func (i *iterator) replayStream() (skip bool, next bool, item Item) {
+func (i *iterator) replayStream() (skip bool, next bool, item communication.Item) {
 
 	err, item := i.data.TryGet(i.position)
 
 	if err != nil {
 		// Error occurred and consumer is failed
-		return false, false, Item{}
+		return false, false, communication.Item{}
 	}
 
 	if item.Id == NoItemId {
 		i.replayFinished = true
-		return true, false, Item{}
+		return true, false, communication.Item{}
 	}
 
 	i.position++
-	return false, true, Item{
+	return false, true, communication.Item{
 		Id:      item.Id,
 		Content: item.Content,
 		Source:  "Iterator",
@@ -69,15 +69,15 @@ func (i *iterator) replayStream() (skip bool, next bool, item Item) {
 
 }
 
-func (i *iterator) Next() (next bool, item Item) {
+func (i *iterator) Next() (next bool, item communication.Item) {
 	for {
 		select {
 		case <-i.terminator.Done():
 			// Terminate processing
-			return false, Item{}
+			return false, communication.Item{}
 		default:
 			var skip, next bool
-			var item Item
+			var item communication.Item
 
 			if i.replayFinished {
 				skip, next, item = i.observeStream()
@@ -92,7 +92,7 @@ func (i *iterator) Next() (next bool, item Item) {
 
 }
 
-func newIterator(data Data, notifier <-chan int, terminate context.Context) Iterator {
+func NewIterator(data Data, notifier <-chan int, terminate context.Context) Iterator {
 	return &iterator{
 		data:           data,
 		terminator:     terminate,

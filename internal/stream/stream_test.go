@@ -2,6 +2,7 @@ package stream_test
 
 import (
 	"log"
+	"pilsner/internal/communication"
 	"pilsner/internal/stream"
 	"testing"
 	"time"
@@ -11,20 +12,20 @@ func TestConsumerOnline(t *testing.T) {
 
 	myStream, cancelStream := stream.NewStream()
 
-	delegate1 := stream.NewDelegate("first")
+	delegate1 := communication.NewDelegate("first")
 
 	counter := 0
 
 	go publishDataToStream(10000, myStream, time.Microsecond, &counter)
 
 	// attach new delegate to stream
-	cancelConsumer := myStream.Stream(*delegate1)
+	myStream.Stream(*delegate1)
 
 	time.Sleep(5 * time.Second)
 
 	Verify(t, *delegate1)
 
-	cancelConsumer()
+	delegate1.Cancel()
 	cancelStream()
 
 	time.Sleep(1 * time.Second)
@@ -35,7 +36,7 @@ func TestConsumerLateAttach(t *testing.T) {
 
 	myStream, cancelStream := stream.NewStream()
 
-	delegate1 := stream.NewDelegate("first")
+	delegate1 := communication.NewDelegate("first")
 
 	counter := 0
 
@@ -43,13 +44,13 @@ func TestConsumerLateAttach(t *testing.T) {
 
 	time.Sleep(2 * time.Second)
 	// attach new delegate to stream
-	cancelConsumer := myStream.Stream(*delegate1)
+	myStream.Stream(*delegate1)
 
 	time.Sleep(5 * time.Second)
 
 	Verify(t, *delegate1)
 
-	cancelConsumer()
+	delegate1.Cancel()
 	cancelStream()
 
 	time.Sleep(1 * time.Second)
@@ -59,7 +60,7 @@ func TestConsumerRemoved(t *testing.T) {
 
 	myStream, cancelStream := stream.NewStream()
 
-	delegate1 := stream.NewDelegate("first")
+	delegate1 := communication.NewDelegate("first")
 
 	counter := 0
 
@@ -67,11 +68,11 @@ func TestConsumerRemoved(t *testing.T) {
 
 	time.Sleep(2 * time.Second)
 	// attach new delegate to stream
-	cancelConsumer := myStream.Stream(*delegate1)
+	myStream.Stream(*delegate1)
 
 	time.Sleep(1 * time.Second)
 
-	cancelConsumer()
+	delegate1.Cancel()
 
 	time.Sleep(1 * time.Second)
 
@@ -84,7 +85,7 @@ func TestConsumerRemoved(t *testing.T) {
 	time.Sleep(1 * time.Second)
 }
 
-func Verify(t *testing.T, sub1 stream.Delegate) {
+func Verify(t *testing.T, sub1 communication.Delegate) {
 	var i = 0
 	var finishedFlag = false
 
@@ -108,8 +109,7 @@ func Verify(t *testing.T, sub1 stream.Delegate) {
 
 func publishDataToStream(count int, newStream stream.Publisher, delay time.Duration, counter *int) {
 	for i := 0; i < count; i++ {
-		err := newStream.Publish(stream.Item{
-			Id: *counter,
+		err := newStream.Publish(communication.Item{
 			Content: []byte{
 				0x01,
 				0x02,
