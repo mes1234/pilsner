@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+option go_package = "./pb";
+
+message Item {
+  bytes content = 1;
+}
+
+
