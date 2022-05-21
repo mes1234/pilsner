@@ -9,18 +9,17 @@ import (
 type publisherService struct {
 }
 
-func (p *publisherService) Publish(ctx context.Context, item *pb.Item) (*pb.ServerResponse, error) {
+func NewPublisherService() *publisherService {
+	return &publisherService{}
+}
+
+func (p *publisherService) Publish(ctx context.Context, item *pb.PublisherRequest) (*pb.ServerResponse, error) {
 
 	response := pb.ServerResponse{}
 
 	return &response, nil
 }
 
-func NewPublisherService() *grpc.Server {
-	grpcServer := grpc.NewServer()
-
-	service := publisherService{}
-	pb.RegisterPublisherServer(grpcServer, &service)
-
-	return grpcServer
+func (p *publisherService) AttachTo(server *grpc.Server) {
+	pb.RegisterPublisherServer(server, p)
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net"
+	"pilsner/server"
 	"pilsner/service"
 )
 
@@ -17,9 +18,16 @@ func main() {
 	}
 	log.Printf("Listening on %s", port)
 
-	grpcServerPublisher := service.NewPublisherService()
+	grpcServer := server.NewServer()
 
-	if err := grpcServerPublisher.Serve(lis); err != nil {
+	publisherService := service.NewPublisherService()
+
+	consumerService := service.NewConsumerService()
+
+	publisherService.AttachTo(grpcServer)
+	consumerService.AttachTo(grpcServer)
+
+	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
 
