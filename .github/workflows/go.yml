@@ -22,7 +22,8 @@ jobs:
       uses: arduino/setup-protoc@v1
 
     - name: Install protoc-go
-      run: go get google.golang.org/protobuf/cmd/protoc-gen-go google.golang.org/grpc/cmd/protoc-gen-go-grpc
+      uses: wizhi/setup-buf@v1
+      #run: go get google.golang.org/protobuf/cmd/protoc-gen-go google.golang.org/grpc/cmd/protoc-gen-go-grpc
 
     - name: Proto Build
       run: protoc --go_out=proto/ --go-grpc_out=require_unimplemented_servers=false:. ./proto/*.proto
