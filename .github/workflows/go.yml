@@ -19,7 +19,10 @@ jobs:
         go-version: 1.18
 
     - name: Install Protoc
-      uses: arduino/setup-protoc@v1
+      uses: arduino/setup-protoc@
+
+    - name: Install Buf
+      uses: wizhi/setup-buf@v1
 
     - name: Installing protoc-gen-go
       run: |
