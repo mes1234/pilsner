@@ -23,7 +23,7 @@ jobs:
 
     - name: Proto Build
       working-directory: ./proto
-      run: protoc --go_out=. --go-grpc_out=require_unimplemented_servers=false:. *.proto
+      run: ./protoc --go_out=. --go-grpc_out=require_unimplemented_servers=false:. *.proto
 
     - name: Build
       run: go build -v ./...
