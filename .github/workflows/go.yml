@@ -20,9 +20,6 @@ jobs:
 
     - name: Install Protoc
       uses: arduino/setup-protoc@v1
-#
-#    - name: Install Buf
-#      uses: wizhi/setup-buf@v1
 
     - name: Installing protoc-gen-go
       run: |
