@@ -26,7 +26,7 @@ enum AckStatusServer {
 // Consumer
 
 service Consumer {
-  rpc Consumer(stream ConsumerResponse) returns (stream Item) {}
+  rpc Consume(stream ConsumerResponse) returns (stream Item) {}
 }
 
 message ConsumerResponse{
@@ -38,9 +38,10 @@ message ConsumerResponse{
 
 message ConsumerSetup {
   bool ReplayMode = 1;
-  string Name = 2;
-  RetryPolicy RetryPolicy = 3;
-  int32 TimeoutMilliSeconds = 4;
+  string StreamName = 2;
+  string ConsumerName = 3;
+  RetryPolicy RetryPolicy = 4;
+  int32 TimeoutMilliSeconds = 5;
 }
 
 message ConsumerAck {

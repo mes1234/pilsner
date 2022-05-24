@@ -3,6 +3,8 @@ package service
 import (
 	"context"
 	"google.golang.org/grpc"
+	"pilsner/internal/communication"
+	"pilsner/internal/manager"
 	"pilsner/proto/pb"
 )
 
@@ -15,9 +17,22 @@ func NewPublisherService() *publisherService {
 
 func (p *publisherService) Publish(ctx context.Context, item *pb.PublisherRequest) (*pb.ServerResponse, error) {
 
-	response := pb.ServerResponse{}
+	_ = p.handlePublisherRequest(item)
 
-	return &response, nil
+	return &pb.ServerResponse{}, nil
+
+}
+
+func (p *publisherService) handlePublisherRequest(item *pb.PublisherRequest) error {
+
+	stream := manager.NewStreamManager()
+
+	_, publisher := stream.Get(item.StreamName)
+
+	_ = publisher.Publish(communication.Item{})
+
+	return nil
+
 }
 
 func (p *publisherService) AttachTo(server *grpc.Server) {
