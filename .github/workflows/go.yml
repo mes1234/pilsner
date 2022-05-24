@@ -30,7 +30,7 @@ jobs:
         go get google.golang.org/grpc/cmd/protoc-gen-go-grpc 
 
     - name: Proto Build
-      run: protoc -I=$PROTO_DIR --go-grpc_out=PROTO_DIR $(find $PROTO_DIR -type f -name '*.proto')
+      run: protoc -I=$PROTO_DIR --go-grpc_out=$PROTO_DIR $(find $PROTO_DIR -type f -name '*.proto')
       env:
         PROTO_DIR: proto
 
