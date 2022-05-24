@@ -30,12 +30,11 @@ jobs:
         go get google.golang.org/grpc/cmd/protoc-gen-go-grpc 
 
     - name: Proto Build
-      run: |
-        protoc -I=$PROTO_DIR \ 
-        --go_out=$GEN_OUT_DIR \ 
-        $(find $PROTO_DIR -type f -name '*.proto')
+      run: protoc --go_out=$PROTO_DIR --go-grpc_out=require_unimplemented_servers=false:$PROTO_DIR  ./$PROTO_DIR/*.proto
+#        protoc -I=$PROTO_DIR \
+#        --go_out=$GEN_OUT_DIR \
+#        $(find $PROTO_DIR -type f -name '*.proto')
       env:
-        GEN_OUT_DIR: proto
         PROTO_DIR: proto
 
     - name: Build
