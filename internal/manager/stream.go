@@ -25,6 +25,7 @@ type StreamManager interface {
 }
 
 type dummyStreamManager struct {
+	lock    sync.RWMutex
 	streams map[string]streamEntity
 }
 
@@ -38,11 +39,14 @@ func NewStreamManager() StreamManager {
 }
 
 func (d *dummyStreamManager) Add(name string) error {
-	newStream, cancel := stream.NewStream()
+	d.lock.Lock()
+	defer d.lock.Unlock()
 
 	if _, ok := d.streams[name]; ok {
 		return fmt.Errorf("stream %s already defined", name)
 	}
+
+	newStream, cancel := stream.NewStream()
 
 	d.streams[name] = streamEntity{
 		stream: newStream,
@@ -53,11 +57,24 @@ func (d *dummyStreamManager) Add(name string) error {
 }
 
 func (d *dummyStreamManager) Remove(name string) error {
-	//TODO implement me
-	panic("implement me")
+	d.lock.Lock()
+	defer d.lock.Unlock()
+
+	if _, ok := d.streams[name]; ok {
+		delete(d.streams, name)
+		return nil
+	} else {
+		return fmt.Errorf("stream %s not defined", name)
+	}
 }
 
 func (d *dummyStreamManager) Get(name string) (error, stream.Publisher) {
-	//TODO implement me
-	panic("implement me")
+	d.lock.RLock()
+	defer d.lock.RUnlock()
+
+	if instance, ok := d.streams[name]; ok {
+		return nil, instance.stream
+	} else {
+		return fmt.Errorf("stream %s not defined", name), nil
+	}
 }
