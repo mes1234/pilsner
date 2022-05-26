@@ -4,7 +4,7 @@ import (
 	"context"
 	"google.golang.org/grpc"
 	"pilsner/internal/communication"
-	"pilsner/internal/manager"
+	"pilsner/internal/manager/streamManager"
 	"pilsner/proto/pb"
 )
 
@@ -25,7 +25,7 @@ func (p *publisherService) Publish(ctx context.Context, item *pb.PublisherReques
 
 func (p *publisherService) handlePublisherRequest(item *pb.PublisherRequest) error {
 
-	stream := manager.NewStreamManager()
+	stream := streamManager.NewStreamManager()
 
 	_, publisher := stream.Get(item.StreamName)
 

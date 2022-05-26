@@ -5,7 +5,7 @@ import (
 	"google.golang.org/grpc"
 	"log"
 	"pilsner/internal/communication"
-	"pilsner/internal/manager"
+	"pilsner/internal/manager/consumerManager"
 	"pilsner/proto/pb"
 )
 
@@ -40,7 +40,7 @@ func (c *consumerService) Consume(server pb.Consumer_ConsumeServer) error {
 
 func (c *consumerService) handleSetup(setup *pb.ConsumerSetup) error {
 
-	manager := manager.NewConsumerManager()
+	manager := consumerManager.NewConsumerManager()
 
 	_, delegate := manager.Attach(setup.StreamName, setup.ConsumerName)
 

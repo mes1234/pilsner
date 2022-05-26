@@ -1,4 +1,4 @@
-package manager
+package streamManager
 
 import (
 	"context"
@@ -21,7 +21,7 @@ func init() {
 type StreamManager interface {
 	Add(name string) error
 	Remove(name string) error
-	Get(name string) (error, stream.Publisher)
+	Get(name string) (error, stream.StreamerPublisher)
 }
 
 type dummyStreamManager struct {
@@ -30,7 +30,7 @@ type dummyStreamManager struct {
 }
 
 type streamEntity struct {
-	stream stream.Publisher
+	stream stream.StreamerPublisher
 	cancel context.CancelFunc
 }
 
@@ -60,15 +60,16 @@ func (d *dummyStreamManager) Remove(name string) error {
 	d.lock.Lock()
 	defer d.lock.Unlock()
 
-	if _, ok := d.streams[name]; ok {
-		delete(d.streams, name)
-		return nil
-	} else {
+	if _, ok := d.streams[name]; !ok {
 		return fmt.Errorf("stream %s not defined", name)
 	}
+
+	delete(d.streams, name)
+	return nil
+
 }
 
-func (d *dummyStreamManager) Get(name string) (error, stream.Publisher) {
+func (d *dummyStreamManager) Get(name string) (error, stream.StreamerPublisher) {
 	d.lock.RLock()
 	defer d.lock.RUnlock()
 

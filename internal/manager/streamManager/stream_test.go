@@ -1,13 +1,13 @@
-package manager_test
+package streamManager_test
 
 import (
-	"pilsner/internal/manager"
+	"pilsner/internal/manager/streamManager"
 	"testing"
 )
 
 func TestOnlyOneInstanceOfManagerExists(t *testing.T) {
-	streamManager1 := manager.NewStreamManager()
-	streamManager2 := manager.NewStreamManager()
+	streamManager1 := streamManager.NewStreamManager()
+	streamManager2 := streamManager.NewStreamManager()
 
 	if streamManager1 != streamManager2 {
 		t.Errorf("Expected to get the same manager recieved different")
@@ -16,8 +16,8 @@ func TestOnlyOneInstanceOfManagerExists(t *testing.T) {
 }
 
 func TestAddedStreamIsAvailableInAllInstances(t *testing.T) {
-	streamManager1 := manager.NewStreamManager()
-	streamManager2 := manager.NewStreamManager()
+	streamManager1 := streamManager.NewStreamManager()
+	streamManager2 := streamManager.NewStreamManager()
 
 	streamManager1.Add("dummy")
 
@@ -30,8 +30,8 @@ func TestAddedStreamIsAvailableInAllInstances(t *testing.T) {
 }
 
 func TestRemovedStreamIsNotAvailableInAllInstances(t *testing.T) {
-	streamManager1 := manager.NewStreamManager()
-	streamManager2 := manager.NewStreamManager()
+	streamManager1 := streamManager.NewStreamManager()
+	streamManager2 := streamManager.NewStreamManager()
 
 	streamManager1.Add("dummy")
 
