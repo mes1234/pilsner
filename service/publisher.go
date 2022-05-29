@@ -29,7 +29,9 @@ func (p *publisherService) handlePublisherRequest(item *pb.PublisherRequest) err
 
 	_, publisher := stream.Get(item.StreamName)
 
-	_ = publisher.Publish(communication.Item{})
+	_ = publisher.Publish(communication.Item{
+		Content: item.GetItem().Content,
+	})
 
 	return nil
 
