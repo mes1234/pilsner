@@ -43,7 +43,7 @@ func (c *consumerService) Consume(server pb.Consumer_ConsumeServer) error {
 }
 
 func (c *consumerService) SendToConsumer(server pb.Consumer_ConsumeServer) {
-
+	// TODO this needs to observe stream to check if need to stop
 	if c.streamingStartedFlag != true {
 		return
 	}
