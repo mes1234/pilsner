@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"google.golang.org/grpc"
+	"log"
 	"pilsner/internal/communication"
 	"pilsner/internal/manager/streamManager"
 	"pilsner/proto/pb"
@@ -32,6 +33,8 @@ func (p *publisherService) handlePublisherRequest(item *pb.PublisherRequest) err
 	_ = publisher.Publish(communication.Item{
 		Content: item.GetItem().Content,
 	})
+
+	log.Printf("Published to stream %s item", item.StreamName)
 
 	return nil
 
