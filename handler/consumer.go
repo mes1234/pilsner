@@ -24,7 +24,7 @@ type consumerServiceHandler struct {
 
 func (c *consumerServiceHandler) Handle(server pb.Consumer_ConsumeServer) error {
 
-	go c.listenToConsumer(server)
+	go listenToConsumer[pb.ConsumerResponse](server.RecvMsg, c.buildHandleMsgFunction(&server))
 
 	for {
 		select {
@@ -35,35 +35,29 @@ func (c *consumerServiceHandler) Handle(server pb.Consumer_ConsumeServer) error 
 		}
 	}
 }
+func (c *consumerServiceHandler) buildHandleMsgFunction(server *pb.Consumer_ConsumeServer) HandleMsgFunction {
 
-func (c *consumerServiceHandler) listenToConsumer(server pb.Consumer_ConsumeServer) {
-	for {
-		msg := pb.ConsumerResponse{}
-		err := server.RecvMsg(&msg)
-		if err != nil {
-			return
+	return func(msg interface{}) error {
+
+		val, ok := msg.(*pb.ConsumerResponse)
+
+		if ok != true {
+			return fmt.Errorf("wrong type expected Consumer Response")
 		}
 
-		err = c.handleMsg(&server, &msg)
-		if err != nil {
-			return
+		content := val.GetContent()
+
+		switch content.(type) {
+		case *pb.ConsumerResponse_Setup:
+			_ = c.handleSetup(mapper.MapConsumerSetupProtoToInternal(val.GetSetup()))
+			go c.SendToConsumer(mapper.MapItemToProto((*server).Send))
+		case *pb.ConsumerResponse_Ack:
+			_ = c.handleAck(val.GetAck())
+		default:
+			return fmt.Errorf("not supported type")
 		}
+		return nil
 	}
-}
-
-func (c *consumerServiceHandler) handleMsg(server *pb.Consumer_ConsumeServer, msg *pb.ConsumerResponse) error {
-	content := msg.GetContent()
-
-	switch content.(type) {
-	case *pb.ConsumerResponse_Setup:
-		_ = c.handleSetup(mapper.MapConsumerSetupProtoToInternal(msg.GetSetup()))
-		go c.SendToConsumer(mapper.MapItemToProto((*server).Send))
-	case *pb.ConsumerResponse_Ack:
-		_ = c.handleAck(msg.GetAck())
-	default:
-		return fmt.Errorf("not supported type")
-	}
-	return nil
 }
 
 func (c *consumerServiceHandler) handleAck(ack *pb.ConsumerAck) error {
