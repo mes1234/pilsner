@@ -5,71 +5,85 @@ import (
 	"fmt"
 	"log"
 	"pilsner/internal/communication"
-	"pilsner/mapper"
-	"pilsner/proto/pb"
-	"time"
+	"pilsner/internal/manager/consumerManager"
 )
 
-type Handler interface {
-	Handle(server pb.Consumer_ConsumeServer) error
-}
-
-type consumerServiceHandler struct {
+type ConsumerHandler struct {
 	startedFlag  bool
 	finishedFlag bool
 	Channel      <-chan communication.Item
-	waiter       chan struct{}
-	ctx          context.Context
+	Waiter       chan struct{}
+	Ctx          context.Context
 }
 
-func (c *consumerServiceHandler) Handle(server pb.Consumer_ConsumeServer) error {
+func NewConsumerHandler() *ConsumerHandler {
+	return &ConsumerHandler{
+		startedFlag: false,
+		Ctx:         context.Background(),
+		Waiter:      make(chan struct{}),
+	}
+}
 
-	go listenToConsumer[pb.ConsumerResponse](server.RecvMsg, c.buildHandleMsgFunction(&server))
+type SendFunction func(item *communication.Item) error
 
+type ReceiveFunction func(m interface{}) error
+
+type HandleMsgFunction func(msg interface{}) error
+
+func (c *ConsumerHandler) SendToConsumer(send SendFunction) {
+	if c.startedFlag != true {
+		return
+	}
 	for {
 		select {
-		case <-c.ctx.Done():
-			return fmt.Errorf("closed consumer stream")
-		case <-time.After(1 * time.Second):
-
+		case <-c.Ctx.Done():
+			c.finishedFlag = true
+			return
+		case data := <-c.Channel:
+			p, ok := data.Content.([]byte)
+			if ok {
+				_ = send(&communication.Item{Content: p})
+			}
+			<-c.Waiter
 		}
 	}
 }
-func (c *consumerServiceHandler) buildHandleMsgFunction(server *pb.Consumer_ConsumeServer) HandleMsgFunction {
 
-	return func(msg interface{}) error {
-
-		val, ok := msg.(*pb.ConsumerResponse)
-
-		if ok != true {
-			return fmt.Errorf("wrong type expected Consumer Response")
+func ListenToConsumer[K interface{}](receive ReceiveFunction, handleMsg HandleMsgFunction) {
+	for {
+		var obj K
+		err := receive(&obj)
+		if err != nil {
+			return
 		}
 
-		content := val.GetContent()
-
-		switch content.(type) {
-		case *pb.ConsumerResponse_Setup:
-			_ = c.handleSetup(mapper.MapConsumerSetupProtoToInternal(val.GetSetup()))
-			go c.SendToConsumer(mapper.MapItemToProto((*server).Send))
-		case *pb.ConsumerResponse_Ack:
-			_ = c.handleAck(val.GetAck())
-		default:
-			return fmt.Errorf("not supported type")
+		err = handleMsg(&obj)
+		if err != nil {
+			return
 		}
-		return nil
 	}
 }
 
-func (c *consumerServiceHandler) handleAck(ack *pb.ConsumerAck) error {
-	log.Printf("Got Ack  %s", ack.Status.String())
-	c.waiter <- struct{}{}
+func (c *ConsumerHandler) HandleSetup(setup communication.ConsumerSetup) error {
+
+	if c.startedFlag == true {
+		return fmt.Errorf("streaming already started")
+	}
+
+	manager := consumerManager.NewConsumerManager()
+
+	_, delegate := manager.Attach(setup.StreamName, setup.ConsumerName)
+
+	c.Channel = delegate.Channel
+	c.Ctx = delegate.Context
+
+	c.startedFlag = true
+
 	return nil
 }
 
-func NewConsumerServiceHandler() *consumerServiceHandler {
-	return &consumerServiceHandler{
-		startedFlag: false,
-		ctx:         context.Background(),
-		waiter:      make(chan struct{}),
-	}
+func (c *ConsumerHandler) HandleAck(ack communication.ConsumerAck) error {
+	log.Printf("Got Ack  %s", ack.String())
+	c.Waiter <- struct{}{}
+	return nil
 }

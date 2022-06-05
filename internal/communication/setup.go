@@ -8,3 +8,11 @@ type ConsumerSetup struct {
 	TimeoutMilliSeconds int32
 }
 type RetryPolicy string
+
+type ConsumerAck struct {
+	Status string
+}
+
+func (c ConsumerAck) String() string {
+	return c.Status
+}
