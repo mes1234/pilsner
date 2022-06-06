@@ -1,45 +1,16 @@
-package service
+package handler
 
 import (
 	"fmt"
-	"google.golang.org/grpc"
-	"pilsner/handler"
 	"pilsner/internal/communication"
+	"pilsner/internal/handler"
 	"pilsner/proto/pb"
 	"pilsner/translator"
 	"time"
 )
 
-type consumerService struct {
-}
-
 type consumerServiceHandler struct {
 	h handler.ConsumerHandler
-}
-
-type Handler interface {
-	Handle(server pb.Consumer_ConsumeServer) error
-}
-
-func (c *consumerService) Consume(server pb.Consumer_ConsumeServer) error {
-
-	h := NewConsumerServiceHandler()
-
-	return h.Handle(server)
-}
-
-func NewConsumerService() *consumerService {
-	return &consumerService{}
-}
-
-func NewConsumerServiceHandler() *consumerServiceHandler {
-	return &consumerServiceHandler{
-		h: *handler.NewConsumerHandler(),
-	}
-}
-
-func (c *consumerService) AttachTo(server *grpc.Server) {
-	pb.RegisterConsumerServer(server, c)
 }
 
 func (c *consumerServiceHandler) Handle(server pb.Consumer_ConsumeServer) error {
@@ -51,10 +22,10 @@ func (c *consumerServiceHandler) Handle(server pb.Consumer_ConsumeServer) error 
 		case <-c.h.Ctx.Done():
 			return fmt.Errorf("closed consumer stream")
 		case <-time.After(1 * time.Second):
-
 		}
 	}
 }
+
 func (c *consumerServiceHandler) buildHandleMsgFunction(server *pb.Consumer_ConsumeServer) handler.HandleMsgFunction {
 
 	return func(msg interface{}) error {
@@ -83,5 +54,11 @@ func (c *consumerServiceHandler) buildHandleMsgFunction(server *pb.Consumer_Cons
 			return fmt.Errorf("not supported type")
 		}
 		return nil
+	}
+}
+
+func NewConsumerServiceHandler() *consumerServiceHandler {
+	return &consumerServiceHandler{
+		h: *handler.NewConsumerHandler(),
 	}
 }

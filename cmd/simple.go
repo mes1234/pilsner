@@ -6,7 +6,7 @@ import (
 	"pilsner/internal/manager/consumerManager"
 	"pilsner/internal/manager/streamManager"
 	"pilsner/server"
-	"pilsner/service"
+	service2 "pilsner/service/service"
 )
 
 func main() {
@@ -30,9 +30,9 @@ func main() {
 
 	grpcServer := server.NewServer()
 
-	publisherService := service.NewPublisherService()
+	publisherService := service2.NewPublisherService()
 
-	consumerService := service.NewConsumerService()
+	consumerService := service2.NewConsumerService()
 
 	publisherService.AttachTo(grpcServer)
 	consumerService.AttachTo(grpcServer)
