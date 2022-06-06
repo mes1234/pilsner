@@ -2,31 +2,28 @@ package handler
 
 import (
 	"context"
-	"log"
 	"pilsner/internal/communication"
-	"pilsner/internal/manager/streamManager"
+	"pilsner/internal/handler"
 	"pilsner/proto/pb"
+	"pilsner/translator"
 )
 
 type publisherServiceHandler struct {
+	h handler.PublisherHandler
 }
 
 func (p *publisherServiceHandler) Handle(ctx context.Context, item *pb.PublisherRequest) (*pb.ServerResponse, error) {
 
-	stream := streamManager.NewStreamManager()
+	_, itemDto := translator.Translate[communication.Item](item.Item)
 
-	_, publisher := stream.Get(item.StreamName)
+	err := p.h.Handle(itemDto, item.StreamName)
 
-	_ = publisher.Publish(communication.Item{
-		Content: item.GetItem().Content,
-	})
-
-	log.Printf("Published to stream %s item", item.StreamName)
-
-	return &pb.ServerResponse{}, nil
+	return &pb.ServerResponse{}, err
 
 }
 
 func NewPublisherServiceHandler() *publisherServiceHandler {
-	return &publisherServiceHandler{}
+	return &publisherServiceHandler{
+		h: *handler.NewPublisherHandler(),
+	}
 }

@@ -38,6 +38,12 @@ func mapConsumerAckProtoToInternal(pbAck *pb.ConsumerAck) communication.Consumer
 	}
 }
 
+func mapItem(pbItem *pb.Item) communication.Item {
+	return communication.Item{
+		Content: pbItem.Content,
+	}
+}
+
 func Translate[Out interface{}](input interface{}) (error, Out) {
 
 	var out Out
@@ -58,6 +64,16 @@ func Translate[Out interface{}](input interface{}) (error, Out) {
 		case *communication.ConsumerAck:
 			mappedInput := input.(*pb.ConsumerAck)
 			result := mapConsumerAckProtoToInternal(mappedInput)
+			return nil, any(result).(Out)
+		default:
+			return fmt.Errorf("no transformation function "), out
+		}
+
+	case *pb.Item:
+		switch any(out).(type) {
+		case communication.Item:
+			mappedInput := input.(*pb.Item)
+			result := mapItem(mappedInput)
 			return nil, any(result).(Out)
 		default:
 			return fmt.Errorf("no transformation function "), out
