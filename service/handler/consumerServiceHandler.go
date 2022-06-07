@@ -2,31 +2,22 @@ package handler
 
 import (
 	"fmt"
+	"pilsner/internal/adapter"
 	"pilsner/internal/communication"
-	"pilsner/internal/handler"
 	"pilsner/proto/pb"
 	"pilsner/translator"
-	"time"
 )
 
 type consumerServiceHandler struct {
-	h handler.ConsumerHandler
+	handler adapter.ConsumerHandler
 }
 
-func (c *consumerServiceHandler) Handle(server pb.Consumer_ConsumeServer) error {
+func (c *consumerServiceHandler) Handle(server pb.Consumer_ConsumeServer) {
 
-	go handler.ListenToConsumer[pb.ConsumerResponse](server.RecvMsg, c.buildHandleMsgFunction(&server))
-
-	for {
-		select {
-		case <-c.h.Ctx.Done():
-			return fmt.Errorf("closed consumer stream")
-		case <-time.After(1 * time.Second):
-		}
-	}
+	adapter.ListenToConsumer[pb.ConsumerResponse](server.RecvMsg, c.buildHandleMsgFunction(&server))
 }
 
-func (c *consumerServiceHandler) buildHandleMsgFunction(server *pb.Consumer_ConsumeServer) handler.HandleMsgFunction {
+func (c *consumerServiceHandler) buildHandleMsgFunction(server *pb.Consumer_ConsumeServer) adapter.HandleMsgFunction {
 
 	return func(msg interface{}) error {
 
@@ -41,15 +32,14 @@ func (c *consumerServiceHandler) buildHandleMsgFunction(server *pb.Consumer_Cons
 		switch content.(type) {
 		case *pb.ConsumerResponse_Setup:
 			_, setupDto := translator.Translate[communication.ConsumerSetup](val.GetSetup())
-			_ = c.h.HandleSetup(setupDto)
-
+			_ = c.handler.HandleSetup(setupDto)
 			_, itemPb := translator.Translate[func(*communication.Item) error]((*server).Send)
-			go c.h.SendToConsumer(itemPb)
+			go c.handler.SendToConsumer(itemPb)
 
 		case *pb.ConsumerResponse_Ack:
 			_, ackDto := translator.Translate[communication.ConsumerAck](val.GetAck())
+			_ = c.handler.HandleAck(ackDto)
 
-			_ = c.h.HandleAck(ackDto)
 		default:
 			return fmt.Errorf("not supported type")
 		}
@@ -57,8 +47,8 @@ func (c *consumerServiceHandler) buildHandleMsgFunction(server *pb.Consumer_Cons
 	}
 }
 
-func NewConsumerServiceHandler() *consumerServiceHandler {
+func NewConsumerServiceHandler() ConsumeServiceHandler {
 	return &consumerServiceHandler{
-		h: *handler.NewConsumerHandler(),
+		handler: adapter.NewConsumerHandler(),
 	}
 }

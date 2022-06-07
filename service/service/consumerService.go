@@ -10,10 +10,9 @@ type consumerService struct {
 }
 
 func (c *consumerService) Consume(server pb.Consumer_ConsumeServer) error {
+	handler.NewConsumerServiceHandler().Handle(server)
 
-	h := handler.NewConsumerServiceHandler()
-
-	return h.Handle(server)
+	return nil
 }
 
 func (c *consumerService) AttachTo(server *grpc.Server) {

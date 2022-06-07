@@ -1,4 +1,4 @@
-package service
+package handler
 
 import (
 	"context"
@@ -10,10 +10,10 @@ type Builder interface {
 	AttachTo(server *grpc.Server)
 }
 
-type ConsumeHandler interface {
-	Handle(server pb.Consumer_ConsumeServer) error
+type ConsumeServiceHandler interface {
+	Handle(server pb.Consumer_ConsumeServer)
 }
 
-type PublishHandler interface {
+type PublishServiceHandler interface {
 	Handle(ctx context.Context, item *pb.PublisherRequest) (*pb.ServerResponse, error)
 }

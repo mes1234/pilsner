@@ -1,4 +1,4 @@
-package handler
+package adapter
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"pilsner/internal/manager/consumerManager"
 )
 
-type ConsumerHandler struct {
+type consumerHandler struct {
 	startedFlag  bool
 	finishedFlag bool
 	Channel      <-chan communication.Item
@@ -16,8 +16,14 @@ type ConsumerHandler struct {
 	Ctx          context.Context
 }
 
-func NewConsumerHandler() *ConsumerHandler {
-	return &ConsumerHandler{
+type ConsumerHandler interface {
+	SendToConsumer(send SendFunction)
+	HandleSetup(setup communication.ConsumerSetup) error
+	HandleAck(ack communication.ConsumerAck) error
+}
+
+func NewConsumerHandler() *consumerHandler {
+	return &consumerHandler{
 		startedFlag: false,
 		Ctx:         context.Background(),
 		Waiter:      make(chan struct{}),
@@ -30,7 +36,7 @@ type ReceiveFunction func(m interface{}) error
 
 type HandleMsgFunction func(msg interface{}) error
 
-func (c *ConsumerHandler) SendToConsumer(send SendFunction) {
+func (c *consumerHandler) SendToConsumer(send SendFunction) {
 	if c.startedFlag != true {
 		return
 	}
@@ -64,7 +70,7 @@ func ListenToConsumer[K interface{}](receive ReceiveFunction, handleMsg HandleMs
 	}
 }
 
-func (c *ConsumerHandler) HandleSetup(setup communication.ConsumerSetup) error {
+func (c *consumerHandler) HandleSetup(setup communication.ConsumerSetup) error {
 
 	if c.startedFlag == true {
 		return fmt.Errorf("streaming already started")
@@ -82,7 +88,7 @@ func (c *ConsumerHandler) HandleSetup(setup communication.ConsumerSetup) error {
 	return nil
 }
 
-func (c *ConsumerHandler) HandleAck(ack communication.ConsumerAck) error {
+func (c *consumerHandler) HandleAck(ack communication.ConsumerAck) error {
 	log.Printf("Got Ack  %s", ack.String())
 	c.Waiter <- struct{}{}
 	return nil
