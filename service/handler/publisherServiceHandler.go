@@ -4,6 +4,7 @@ import (
 	"context"
 	"pilsner/internal/adapter"
 	"pilsner/internal/communication"
+	"pilsner/internal/manager/streamManager"
 	"pilsner/proto/pb"
 	"pilsner/translator"
 )
@@ -14,9 +15,11 @@ type publisherServiceHandler struct {
 
 func (p *publisherServiceHandler) Handle(ctx context.Context, item *pb.PublisherRequest) (*pb.ServerResponse, error) {
 
+	stream := streamManager.NewStreamManager()
+
 	_, itemDto := translator.Translate[communication.Item](item.Item)
 
-	err := p.handler.Handle(itemDto, item.StreamName)
+	err := p.handler.Handle(itemDto, item.StreamName, stream)
 
 	if err != nil {
 		return &pb.ServerResponse{

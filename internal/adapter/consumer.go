@@ -37,6 +37,7 @@ type ReceiveFunction func(m interface{}) error
 type HandleMsgFunction func(msg interface{}) error
 
 func (c *consumerHandler) SendToConsumer(send SendFunction) {
+
 	if c.startedFlag != true {
 		return
 	}
