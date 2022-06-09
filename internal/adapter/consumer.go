@@ -38,9 +38,9 @@ type HandleMsgFunction func(msg interface{}) error
 
 func (c *consumerHandler) SendToConsumer(send SendFunction) {
 
-	if c.startedFlag != true {
-		return
-	}
+	//if c.startedFlag != true {
+	//	return
+	//}
 	for {
 		select {
 		case <-c.Ctx.Done():

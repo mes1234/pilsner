@@ -11,7 +11,7 @@ import (
 func TestSendToConsumerAndExit(t *testing.T) {
 	h := adapter.NewConsumerHandler()
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, _ := context.WithCancel(context.Background())
 
 	h.Ctx = ctx
 
@@ -19,25 +19,23 @@ func TestSendToConsumerAndExit(t *testing.T) {
 
 	h.Channel = ch
 
-	send := func(flag *bool) adapter.SendFunction {
+	flag := false
+
+	sendFunction := func(flag *bool) adapter.SendFunction {
 		return func(item *communication.Item) error {
 			*flag = true
 
 			return nil
 		}
-	}
+	}(&flag)
 
-	flag := false
-
-	go h.SendToConsumer(send(&flag))
+	go h.SendToConsumer(sendFunction)
 
 	ch <- communication.Item{
-		Content: true,
+		Content: []byte{01},
 	}
 
-	time.Sleep(100)
-
-	cancel()
+	time.Sleep(1 * time.Second)
 
 	if !flag {
 		t.Errorf("Expected flag to be true got %t", flag)
