@@ -1,0 +1,76 @@
+syntax = "proto3";
+
+option go_package = "./pb";
+
+// Publisher
+
+service Publisher {
+  rpc Publish(PublisherRequest) returns (ServerResponse) {}
+}
+
+message PublisherRequest {
+  string StreamName = 1;
+  Item Item = 2;
+}
+
+message ServerResponse {
+  AckStatusServer Status = 1;
+}
+
+enum AckStatusServer {
+  Received = 0;
+  Error = 1;
+  Unauthorized = 3;
+}
+
+// Consumer
+
+service Consumer {
+  rpc Consume(stream ConsumerResponse) returns (stream Item) {}
+}
+
+message ConsumerResponse{
+  oneof Content {
+    ConsumerSetup Setup = 1;
+    ConsumerAck Ack = 2;
+  }
+}
+
+message ConsumerSetup {
+  bool ReplayMode = 1;
+  string StreamName = 2;
+  string ConsumerName = 3;
+  RetryPolicy RetryPolicy = 4;
+  int32 TimeoutMilliSeconds = 5;
+}
+
+message ConsumerAck {
+  AckStatusConsumer Status = 1;
+}
+
+enum RetryPolicy {
+  NoRetry = 0;
+  Linear = 1;
+  Exp = 2;
+}
+
+enum AckStatusConsumer {
+  Accepted = 0;
+  Rejected = 1;
+}
+
+// Common
+
+message Item {
+  bytes content = 1;
+}
+
+
+// Enumerations
+
+
+
+
+
+
+

@@ -9,6 +9,11 @@ import (
 	"sync"
 )
 
+type StreamerPublisher interface {
+	Publisher
+	Streamer
+}
+
 type Publisher interface {
 	// Publish writes single item to stream
 	Publish(item communication.Item) error

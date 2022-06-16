@@ -1,4 +1,3 @@
 protoc --go_out=. `
-   --go-grpc_out=. `
-   --micro_out=. `
-    greeter.proto
+   --go-grpc_out=require_unimplemented_servers=false:. `
+     *.proto
