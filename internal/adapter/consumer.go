@@ -18,7 +18,7 @@ type consumerHandler struct {
 
 type ConsumerHandler interface {
 	SendToConsumer(send SendFunction)
-	HandleSetup(setup communication.ConsumerSetup) error
+	HandleSetup(setup communication.ConsumerSetup, manager consumerManager.ConsumerManager) error
 	HandleAck(ack communication.ConsumerAck) error
 }
 
@@ -38,9 +38,9 @@ type HandleMsgFunction func(msg interface{}) error
 
 func (c *consumerHandler) SendToConsumer(send SendFunction) {
 
-	//if c.startedFlag != true {
-	//	return
-	//}
+	if c.startedFlag != true {
+		return
+	}
 	for {
 		select {
 		case <-c.Ctx.Done():
@@ -71,13 +71,11 @@ func ListenToConsumer[K interface{}](receive ReceiveFunction, handleMsg HandleMs
 	}
 }
 
-func (c *consumerHandler) HandleSetup(setup communication.ConsumerSetup) error {
+func (c *consumerHandler) HandleSetup(setup communication.ConsumerSetup, manager consumerManager.ConsumerManager) error {
 
 	if c.startedFlag == true {
 		return fmt.Errorf("streaming already started")
 	}
-
-	manager := consumerManager.NewConsumerManager()
 
 	_, delegate := manager.Attach(setup.StreamName, setup.ConsumerName)
 
