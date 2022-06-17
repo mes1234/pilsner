@@ -21,7 +21,7 @@ func newDummyConsumerManager(context context.Context, channel chan communication
 	}
 }
 
-func (d dummyConsumerManager) Attach(streamName string, consumerName string) (error, communication.Delegate) {
+func (d dummyConsumerManager) Attach(consumerName string) (error, communication.Delegate) {
 	return nil, communication.Delegate{
 		Channel: d.Channel,
 		Context: d.Context,

@@ -19,7 +19,7 @@ func (p *publisherServiceHandler) Handle(ctx context.Context, item *pb.Publisher
 
 	_, itemDto := translator.Translate[communication.Item](item.Item)
 
-	err := p.handler.Handle(itemDto, item.StreamName, stream)
+	err := p.handler.Handle(itemDto, stream)
 
 	if err != nil {
 		return &pb.ServerResponse{

@@ -2,7 +2,6 @@ package streamManager
 
 import (
 	"context"
-	"fmt"
 	"pilsner/internal/stream"
 	"sync"
 )
@@ -12,21 +11,24 @@ var streamManager StreamManager
 
 func init() {
 	initStreamManager.Do(func() {
+		newStream, cancel := stream.NewStream()
+
 		streamManager = &dummyStreamManager{
-			streams: make(map[string]streamEntity),
+			stream: streamEntity{
+				stream: newStream,
+				cancel: cancel,
+			},
 		}
 	})
 }
 
 type StreamManager interface {
-	Add(name string) error
-	Remove(name string) error
-	Get(name string) (error, stream.StreamerPublisher)
+	Get() (error, stream.StreamerPublisher)
 }
 
 type dummyStreamManager struct {
-	lock    sync.RWMutex
-	streams map[string]streamEntity
+	lock   sync.RWMutex
+	stream streamEntity
 }
 
 type streamEntity struct {
@@ -38,44 +40,10 @@ func NewStreamManager() StreamManager {
 	return streamManager
 }
 
-func (d *dummyStreamManager) Add(name string) error {
-	d.lock.Lock()
-	defer d.lock.Unlock()
-
-	if _, ok := d.streams[name]; ok {
-		return fmt.Errorf("stream %s already defined", name)
-	}
-
-	newStream, cancel := stream.NewStream()
-
-	d.streams[name] = streamEntity{
-		stream: newStream,
-		cancel: cancel,
-	}
-	return nil
-
-}
-
-func (d *dummyStreamManager) Remove(name string) error {
-	d.lock.Lock()
-	defer d.lock.Unlock()
-
-	if _, ok := d.streams[name]; !ok {
-		return fmt.Errorf("stream %s not defined", name)
-	}
-
-	delete(d.streams, name)
-	return nil
-
-}
-
-func (d *dummyStreamManager) Get(name string) (error, stream.StreamerPublisher) {
+func (d *dummyStreamManager) Get() (error, stream.StreamerPublisher) {
 	d.lock.RLock()
 	defer d.lock.RUnlock()
 
-	if instance, ok := d.streams[name]; ok {
-		return nil, instance.stream
-	} else {
-		return fmt.Errorf("stream %s not defined", name), nil
-	}
+	return nil, d.stream.stream
+
 }

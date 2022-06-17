@@ -12,7 +12,7 @@ func TestAttachedConsumerToNonValidStreamIsInvalid(t *testing.T) {
 
 	c := consumerManager.NewConsumerManager()
 
-	err, _ := c.Attach("dummy", "dummy")
+	err, _ := c.Attach("dummy")
 
 	if err == nil {
 		t.Errorf("Expected to fail attaching consumer to stream")
@@ -24,15 +24,13 @@ func TestAttachedConsumerGetsData(t *testing.T) {
 	s := streamManager.NewStreamManager()
 	c := consumerManager.NewConsumerManager()
 
-	s.Add("dummy")
-
-	_, st := s.Get("dummy")
+	_, st := s.Get()
 
 	st.Publish(communication.Item{
 		Content: "hello",
 	})
 
-	_, d := c.Attach("dummy", "dummy")
+	_, d := c.Attach("dummy")
 
 	time.Sleep(1)
 

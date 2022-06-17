@@ -77,7 +77,7 @@ func (c *consumerHandler) HandleSetup(setup communication.ConsumerSetup, manager
 		return fmt.Errorf("streaming already started")
 	}
 
-	_, delegate := manager.Attach(setup.StreamName, setup.ConsumerName)
+	_, delegate := manager.Attach(setup.ConsumerName)
 
 	c.Channel = delegate.Channel
 	c.Ctx = delegate.Context

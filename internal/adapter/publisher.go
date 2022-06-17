@@ -11,28 +11,28 @@ type publisherHandler struct {
 }
 
 type PublisherHandler interface {
-	Handle(communication.Item, string, streamManager.StreamManager) error
+	Handle(communication.Item, streamManager.StreamManager) error
 }
 
 func NewPublisherHandler() *publisherHandler {
 	return &publisherHandler{}
 }
 
-func (p *publisherHandler) Handle(item communication.Item, streamName string, stream streamManager.StreamManager) error {
+func (p *publisherHandler) Handle(item communication.Item, stream streamManager.StreamManager) error {
 
-	err, publisher := stream.Get(streamName)
+	err, publisher := stream.Get()
 
 	if err != nil {
-		return fmt.Errorf("cannot get stream %s", streamName)
+		return fmt.Errorf("cannot get stream ")
 	}
 
 	err = publisher.Publish(item)
 
 	if err != nil {
-		return fmt.Errorf("failed to publish to stream %s", streamName)
+		return fmt.Errorf("failed to publish to stream ")
 	}
 
-	log.Printf("Published to stream %s item", streamName)
+	log.Printf("Published to stream  item")
 
 	return nil
 }

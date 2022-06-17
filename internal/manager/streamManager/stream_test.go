@@ -19,9 +19,7 @@ func TestAddedStreamIsAvailableInAllInstances(t *testing.T) {
 	streamManager1 := streamManager.NewStreamManager()
 	streamManager2 := streamManager.NewStreamManager()
 
-	streamManager1.Add("dummy")
-
-	err, _ := streamManager2.Get("dummy")
+	err, _ := streamManager2.Get()
 
 	if err != nil {
 		t.Errorf("Expected no error while retrieving defined stream")
@@ -33,17 +31,13 @@ func TestRemovedStreamIsNotAvailableInAllInstances(t *testing.T) {
 	streamManager1 := streamManager.NewStreamManager()
 	streamManager2 := streamManager.NewStreamManager()
 
-	streamManager1.Add("dummy")
-
-	err, _ := streamManager2.Get("dummy")
+	err, _ := streamManager2.Get()
 
 	if err != nil {
 		t.Errorf("Expected no error while retrieving defined stream")
 	}
 
-	streamManager1.Remove("dummy")
-
-	err, _ = streamManager2.Get("dummy")
+	err, _ = streamManager2.Get()
 
 	if err == nil {
 		t.Errorf("Expected  error while retrieving removed stream")

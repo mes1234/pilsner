@@ -16,8 +16,7 @@ func main() {
 	consumerManager.NewConsumerManager()
 
 	// Init some dummies stream
-	sm := streamManager.NewStreamManager()
-	sm.Add("Hello")
+	_ = streamManager.NewStreamManager()
 
 	log.Println("Starting listening on port 8080")
 	port := ":8080"
