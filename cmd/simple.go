@@ -3,8 +3,7 @@ package main
 import (
 	"log"
 	"net"
-	"pilsner/internal/manager/consumerManager"
-	"pilsner/internal/manager/streamManager"
+	"pilsner/internal/manager"
 	"pilsner/server"
 	service2 "pilsner/service/service"
 )
@@ -12,11 +11,7 @@ import (
 func main() {
 
 	// Init managers
-	streamManager.NewStreamManager()
-	consumerManager.NewConsumerManager()
-
-	// Init some dummies stream
-	_ = streamManager.NewStreamManager()
+	manager.NewConsumerManager()
 
 	log.Println("Starting listening on port 8080")
 	port := ":8080"

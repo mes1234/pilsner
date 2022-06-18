@@ -2,7 +2,7 @@ package communication
 
 import (
 	"context"
-	"pilsner/internal/setup"
+	"pilsner/setup"
 )
 
 type Delegate struct {

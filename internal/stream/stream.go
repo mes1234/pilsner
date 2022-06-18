@@ -5,9 +5,31 @@ import (
 	"fmt"
 	"log"
 	"pilsner/internal/communication"
-	"pilsner/internal/setup"
+	"pilsner/setup"
 	"sync"
 )
+
+var initStream sync.Once
+
+// memoryStream is app instance of stream
+var memoryStream StreamerPublisher
+
+// cancel is used to gracefully shutdown stream and app
+var cancel context.CancelFunc
+
+func init() {
+	initStream.Do(func() {
+		memoryStream, cancel = NewStream()
+	})
+}
+
+func Get() StreamerPublisher {
+	return memoryStream
+}
+
+func Shutdown() {
+	cancel()
+}
 
 type StreamerPublisher interface {
 	Publisher

@@ -4,29 +4,23 @@ import (
 	"fmt"
 	"log"
 	"pilsner/internal/communication"
-	"pilsner/internal/manager/streamManager"
+	"pilsner/internal/stream"
 )
 
 type publisherHandler struct {
 }
 
 type PublisherHandler interface {
-	Handle(communication.Item, streamManager.StreamManager) error
+	Handle(communication.Item, stream.Publisher) error
 }
 
 func NewPublisherHandler() *publisherHandler {
 	return &publisherHandler{}
 }
 
-func (p *publisherHandler) Handle(item communication.Item, stream streamManager.StreamManager) error {
+func (p *publisherHandler) Handle(item communication.Item, stream stream.Publisher) error {
 
-	err, publisher := stream.Get()
-
-	if err != nil {
-		return fmt.Errorf("cannot get stream ")
-	}
-
-	err = publisher.Publish(item)
+	err := stream.Publish(item)
 
 	if err != nil {
 		return fmt.Errorf("failed to publish to stream ")

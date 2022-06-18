@@ -25,7 +25,6 @@ func mapItemToProto(pbFunc func(*pb.Item) error) func(*communication.Item) error
 func mapConsumerSetupProtoToInternal(pbSetup *pb.ConsumerSetup) communication.ConsumerSetup {
 	return communication.ConsumerSetup{
 		ReplayMode:          pbSetup.ReplayMode,
-		StreamName:          pbSetup.StreamName,
 		ConsumerName:        pbSetup.ConsumerName,
 		RetryPolicy:         pbSetup.RetryPolicy.String(),
 		TimeoutMilliSeconds: 0,

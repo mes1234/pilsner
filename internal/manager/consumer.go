@@ -1,9 +1,9 @@
-package consumerManager
+package manager
 
 import (
 	"fmt"
 	"pilsner/internal/communication"
-	"pilsner/internal/manager/streamManager"
+	"pilsner/internal/stream"
 	"sync"
 )
 
@@ -13,16 +13,16 @@ var consumerManager ConsumerManager
 func init() {
 	initConsumerManager.Do(func() {
 		consumerManager = &dummyConsumerManager{
-			streamManager: streamManager.NewStreamManager(),
-			consumers:     make(map[string]communication.Delegate),
+			stream:    stream.Get(),
+			consumers: make(map[string]communication.Delegate),
 		}
 	})
 }
 
 type dummyConsumerManager struct {
-	lock          sync.RWMutex
-	streamManager streamManager.StreamManager
-	consumers     map[string]communication.Delegate
+	lock      sync.RWMutex
+	stream    stream.StreamerPublisher
+	consumers map[string]communication.Delegate
 }
 
 func NewConsumerManager() ConsumerManager {
@@ -33,11 +33,7 @@ func (d *dummyConsumerManager) Attach(consumerName string) (error, communication
 	d.lock.Lock()
 	defer d.lock.Unlock()
 
-	err, s := d.streamManager.Get()
-
-	if err != nil {
-		return fmt.Errorf("stream  not defined"), communication.Delegate{}
-	}
+	s := stream.Get()
 
 	if _, ok := d.consumers[consumerName]; ok {
 		return fmt.Errorf("consumer %s already defined", consumerName), communication.Delegate{}

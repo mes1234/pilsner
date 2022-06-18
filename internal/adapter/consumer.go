@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 	"pilsner/internal/communication"
-	"pilsner/internal/manager/consumerManager"
+	"pilsner/internal/manager"
 )
 
 type consumerHandler struct {
@@ -18,7 +18,7 @@ type consumerHandler struct {
 
 type ConsumerHandler interface {
 	SendToConsumer(send SendFunction)
-	HandleSetup(setup communication.ConsumerSetup, manager consumerManager.ConsumerManager) error
+	HandleSetup(setup communication.ConsumerSetup, manager manager.ConsumerManager) error
 	HandleAck(ack communication.ConsumerAck) error
 }
 
@@ -71,7 +71,7 @@ func ListenToConsumer[K interface{}](receive ReceiveFunction, handleMsg HandleMs
 	}
 }
 
-func (c *consumerHandler) HandleSetup(setup communication.ConsumerSetup, manager consumerManager.ConsumerManager) error {
+func (c *consumerHandler) HandleSetup(setup communication.ConsumerSetup, manager manager.ConsumerManager) error {
 
 	if c.startedFlag == true {
 		return fmt.Errorf("streaming already started")

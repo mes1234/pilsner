@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"pilsner/internal/adapter"
 	"pilsner/internal/communication"
-	"pilsner/internal/manager/consumerManager"
+	"pilsner/internal/manager"
 	"pilsner/proto/pb"
 	"pilsner/translator"
 )
@@ -33,7 +33,7 @@ func (c *consumerServiceHandler) buildHandleMsgFunction(server *pb.Consumer_Cons
 		switch content.(type) {
 		case *pb.ConsumerResponse_Setup:
 			_, setupDto := translator.Translate[communication.ConsumerSetup](val.GetSetup())
-			manager := consumerManager.NewConsumerManager()
+			manager := manager.NewConsumerManager()
 			_ = c.handler.HandleSetup(setupDto, manager)
 			_, itemPb := translator.Translate[func(*communication.Item) error]((*server).Send)
 			go c.handler.SendToConsumer(itemPb)

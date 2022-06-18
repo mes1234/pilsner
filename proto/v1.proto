@@ -38,10 +38,9 @@ message ConsumerResponse{
 
 message ConsumerSetup {
   bool ReplayMode = 1;
-  string StreamName = 2;
-  string ConsumerName = 3;
-  RetryPolicy RetryPolicy = 4;
-  int32 TimeoutMilliSeconds = 5;
+  string ConsumerName = 2;
+  RetryPolicy RetryPolicy = 3;
+  int32 TimeoutMilliSeconds = 4;
 }
 
 message ConsumerAck {
