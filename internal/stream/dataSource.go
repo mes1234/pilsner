@@ -11,14 +11,14 @@ import (
 const NoItemId = -1
 
 type items struct {
-	repository []communication.Item
+	repository RepositoryWrapper
 	notifiers  map[uuid.UUID]chan int
 	lock       sync.Mutex
 	ctx        context.Context
 }
 
 func NewDataSource(ctx context.Context) *items {
-	repository := make([]communication.Item, 0)
+	repository := NewRepository()
 
 	return &items{
 		repository: repository,
@@ -65,8 +65,8 @@ func (i *items) removeNotifier(id uuid.UUID, terminate context.Context) {
 }
 
 func (i *items) TryGet(position int) (error, communication.Item) {
-	if len(i.repository)-1 >= position {
-		return nil, i.repository[position]
+	if i.repository.Len()-1 >= position {
+		return nil, i.repository.Get(position)
 	} else {
 		return nil, communication.Item{
 			Id: NoItemId,
@@ -82,9 +82,9 @@ func (i *items) Put(item communication.Item) {
 	default:
 		i.lock.Lock()
 		defer i.lock.Unlock()
-		item.Id = len(i.repository)
-		i.repository = append(i.repository, item)
-		id := len(i.repository) - 1
+		item.Id = i.repository.Len()
+		i.repository = i.repository.Append(item)
+		id := i.repository.Len() - 1
 
 		for _, notifier := range i.notifiers {
 			select {
