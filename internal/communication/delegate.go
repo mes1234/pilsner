@@ -16,7 +16,7 @@ func NewDelegate(name string) *Delegate {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	subscriber := make(chan Item, setup.BufferSize)
+	subscriber := make(chan Item, setup.Config.BufferSize)
 
 	return &Delegate{
 		Name:    name,

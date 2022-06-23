@@ -43,6 +43,23 @@ func mapItem(pbItem *pb.Item) communication.Item {
 	}
 }
 
+func mapCommunicationItemToProto(communicationItem *communication.Item) pb.Item {
+
+	switch communicationItem.Content.(type) {
+	case []byte:
+		return pb.Item{
+			Content: communicationItem.Content.([]byte),
+		}
+	case string:
+		return pb.Item{
+			Content: []byte(communicationItem.Content.(string)),
+		}
+	default:
+		return pb.Item{}
+	}
+
+}
+
 func Translate[Out interface{}](input interface{}) (error, Out) {
 
 	var out Out
@@ -83,6 +100,16 @@ func Translate[Out interface{}](input interface{}) (error, Out) {
 		case func(*communication.Item) error:
 			mappedInput := input.(func(*pb.Item) error)
 			result := mapItemToProto(mappedInput)
+			return nil, any(result).(Out)
+		default:
+			return fmt.Errorf("no transformation function "), out
+		}
+
+	case *communication.Item:
+		switch any(out).(type) {
+		case pb.Item:
+			mappedInput := input.(*communication.Item)
+			result := mapCommunicationItemToProto(mappedInput)
 			return nil, any(result).(Out)
 		default:
 			return fmt.Errorf("no transformation function "), out

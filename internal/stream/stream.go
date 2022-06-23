@@ -52,7 +52,7 @@ func NewStream() (*stream, context.CancelFunc) {
 
 	ctx, cancelStream := context.WithCancel(context.Background())
 
-	buffer := make(chan communication.Item, setup.BufferSize)
+	buffer := make(chan communication.Item, setup.Config.BufferSize)
 	items := NewDataSource(ctx)
 	newStream := stream{
 		items:      items,
